@@ -52,10 +52,12 @@ Moving around:
    a    s    d
         x
 
-w/x : increase/decrease linear velocity (Burger : ~ 0.22, Waffle and Waffle Pi : ~ 0.26)
+w/s: increase/decrease linear velocity (Burger : ~ 0.22, Waffle and Waffle Pi : ~ 0.26)
 a/d : increase/decrease angular velocity (Burger : ~ 2.84, Waffle and Waffle Pi : ~ 1.82)
 
-space key, s : force stop
+x: cancel angular speed
+
+space key: force stop
 
 CTRL-C to quit
 """
@@ -153,7 +155,7 @@ if __name__=="__main__":
                 target_linear_vel = checkLinearLimitVelocity(target_linear_vel + LIN_VEL_STEP_SIZE)
                 status = status + 1
                 print(vels(target_linear_vel,target_angular_vel))
-            elif key == 'x' :
+            elif key == 's' :
                 target_linear_vel = checkLinearLimitVelocity(target_linear_vel - LIN_VEL_STEP_SIZE)
                 status = status + 1
                 print(vels(target_linear_vel,target_angular_vel))
@@ -165,11 +167,16 @@ if __name__=="__main__":
                 target_angular_vel = checkAngularLimitVelocity(target_angular_vel - ANG_VEL_STEP_SIZE)
                 status = status + 1
                 print(vels(target_linear_vel,target_angular_vel))
-            elif key == ' ' or key == 's' :
+            elif  key == ' ' :
                 target_linear_vel   = 0.0
-                control_linear_vel  = 0.0
                 target_angular_vel  = 0.0
+                control_linear_vel  = 0.0
                 control_angular_vel = 0.0
+                status = status + 1
+                print(vels(target_linear_vel, target_angular_vel))
+            elif key == 'x' :
+                target_angular_vel  = 0.0
+                status = status + 1
                 print(vels(target_linear_vel, target_angular_vel))
             else:
                 if (key == '\x03'):
