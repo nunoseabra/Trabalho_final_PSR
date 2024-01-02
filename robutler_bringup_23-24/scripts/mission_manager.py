@@ -162,6 +162,16 @@ def main():
                                                  goal_publisher=goal_publisher))
 
     # entry = menu_handler.insert("living room", parent=h_first_entry, callback=moveToLivingRoom)
+    
+    h_second_entry = menu_handler.insert("Do")
+
+    entry = menu_handler.insert("kitchen", parent=h_second_entry,
+                                callback=partial(moveTo,
+                                                 x=6.568593, y=-1.788789, z=0,
+                                                 R=0, P=0, Y=-1.504141,
+                                                 location='kitchen',
+                                                 goal_publisher=goal_publisher))
+
 
     makeMenuMarker("marker1")
 
