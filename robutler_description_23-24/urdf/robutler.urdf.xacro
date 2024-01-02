@@ -200,20 +200,59 @@
     </collision>
   </link>
 
+
+
   <link name="new_camera_link">
-    <collision>
-      <origin xyz="0.005 0.005 0.013" rpy="0 0 0"/>
+    <visual>
+      <origin xyz="-0.06 0 0.0" rpy="0 0 0"/>
       <geometry>
-        <cylinder length="0.02" radius="0.001"/>
+        <cylinder length="0.5" radius="0.01"/>
+      </geometry>
+      <material name="dark"/>
+    </visual>
+
+    <collision>
+      <origin xyz="-0.06 0 0.0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="0.5" radius="0.01"/>
       </geometry>
     </collision>
   </link>
   
   <joint name="new_camera_joint" type="fixed">
-    <origin xyz="0.073 -0.011 0.084" rpy="0 0 0"/>
+    <origin xyz="0 0 0.25" rpy="0 0 0"/>
     <parent link="base_link"/>
     <child link="new_camera_link"/>
   </joint>
+
+
+
+   <link name="new_camera_base_link">
+    <visual>
+      <origin xyz="-0.06 0 0.5" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="0.01" radius="0.03"/>
+      </geometry>
+      <material name="blue"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0.0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="0.01" radius="0.03"/>
+      </geometry>
+    </collision>
+  </link>
+  
+  <joint name="new_camera_base_joint" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <parent link="new_camera_link"/>
+    <child link="new_camera_base_link"/>
+  </joint>
+
+
+
+
 
   <joint name="camera_rgb_joint" type="fixed">
     <origin xyz="0.003 0.011 0.009" rpy="0 0 0"/>
