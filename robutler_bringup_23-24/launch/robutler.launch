@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="model" default="$(env TURTLEBOT3_MODEL)" doc="model type [burger, waffle, waffle_pi]"/>
+
+    <param name="robot_description" command="$(find xacro)/xacro $(find robutler_description_23-24)/urdf/robutler.urdf.xacro" />
+
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen"/>
+
+    <node pkg="rviz" type="rviz" name="rviz" output="screen" args="-d $(find robutler_bringup_23-24)/config/rviz.rviz"/>
+
+  </launch>
