@@ -249,8 +249,22 @@
     <parent link="new_camera_link"/>
     <child link="new_camera_base_link"/>
   </joint>
+  
 
 
+  <joint name="new_camera_rgb_joint" type="fixed">
+    <origin xyz="-0.06 0 0.6" rpy="0 0 3.14159"/>
+    <parent link="new_camera_base_link"/>
+    <child link="camera_rgb_frame2"/>
+  </joint>
+  <link name="camera_rgb_frame2"/>
+
+  <joint name="new_camera_rgb_optical_joint" type="fixed">
+    <origin xyz="0 0 0" rpy="-1.57 0 -1.57"/>
+    <parent link="camera_rgb_frame2"/>
+    <child link="camera_rgb_optical_frame2"/>
+  </joint>
+  <link name="camera_rgb_optical_frame2"/>
 
 
 
