@@ -16,11 +16,11 @@ def main():
     # -------------------------------
     # Initialization
     # -------------------------------
-    parser = argparse.ArgumentParser(description='Script to compute perfect numbers.')
+    parser = argparse.ArgumentParser(description='Spawn de objetos em determinadas localizacões')
     parser.add_argument('-l', '--location', type=str, help='', required=False,
-                        default='on_bed')
+                        default='on_bed_side_table')
     parser.add_argument('-o', '--object', type=str, help='', required=False,
-                        default='person_standing')
+                        default='sphere_v')
 
     args = vars(parser.parse_args())  # creates a dictionary
     print(args)
@@ -79,14 +79,25 @@ def main():
 
     service_client = rospy.ServiceProxy(service_name, SpawnModel)
 
+    '''
     print('Spawning an object ...')
     uuid_str = str(uuid.uuid4())
-    service_client(objects['person_standing']['name'] + '_' + uuid_str,
-                   objects['person_standing']['sdf'],
-                   objects['person_standing']['name'] + '_' + uuid_str,
+    service_client(objects['sphere_v']['name'] + '_' + uuid_str,
+                   objects['sphere_v']['sdf'],
+                   objects['sphere_v']['name'] + '_' + uuid_str,
                    poses['on_bed']['pose'],
                    'world')
+    '''
 
+    location = args['location']
+    object_name = args['object']
+
+    uuid_str = str(uuid.uuid4())
+    service_client(objects[object_name]['name'] + '_' + uuid_str,
+                objects[object_name]['sdf'],
+                objects[object_name]['name'] + '_' + uuid_str,
+                poses[location]['pose'],
+                'world')
     print('Done')
 
 
