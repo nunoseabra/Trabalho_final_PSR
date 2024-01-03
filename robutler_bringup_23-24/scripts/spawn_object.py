@@ -45,6 +45,13 @@ def main():
     p.orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
     poses['on_bed_side_table'] = {'pose': p}
 
+    # on bed-side-table pose
+    p = Pose()
+    p.position = Point(x=-8.213487, y=-4.440661, z=0.351335)
+    q = quaternion_from_euler(0, 0, 0)  # From euler angles (rpy) to quaternion
+    p.orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
+    poses['on_corner_chair'] = {'pose': p}
+
     # define objects
     objects = {}
 
@@ -62,43 +69,34 @@ def main():
         print('Location ' + args['location'] +
               ' is unknown. Available locations are ' + str(list(poses.keys())))
 
-    if not args['object'] in objects.keys():
+    elif not args['object'] in objects.keys():
         print('Object ' + args['object'] +
               ' is unknown. Available objects are ' + str(list(objects.keys())))
 
     # -------------------------------
     # ROS
     # -------------------------------
+    
+    else:
+        rospy.init_node('insert_object', log_level=rospy.INFO)
 
-    rospy.init_node('insert_object', log_level=rospy.INFO)
+        service_name = 'gazebo/spawn_sdf_model'
+        print('waiting for service ' + service_name + ' ... ', end='')
+        rospy.wait_for_service(service_name)
+        print('Found')
 
-    service_name = 'gazebo/spawn_sdf_model'
-    print('waiting for service ' + service_name + ' ... ', end='')
-    rospy.wait_for_service(service_name)
-    print('Found')
+        service_client = rospy.ServiceProxy(service_name, SpawnModel)
 
-    service_client = rospy.ServiceProxy(service_name, SpawnModel)
+        location = args['location']
+        object_name = args['object']
 
-    '''
-    print('Spawning an object ...')
-    uuid_str = str(uuid.uuid4())
-    service_client(objects['sphere_v']['name'] + '_' + uuid_str,
-                   objects['sphere_v']['sdf'],
-                   objects['sphere_v']['name'] + '_' + uuid_str,
-                   poses['on_bed']['pose'],
-                   'world')
-    '''
-
-    location = args['location']
-    object_name = args['object']
-
-    uuid_str = str(uuid.uuid4())
-    service_client(objects[object_name]['name'] + '_' + uuid_str,
-                objects[object_name]['sdf'],
-                objects[object_name]['name'] + '_' + uuid_str,
-                poses[location]['pose'],
-                'world')
-    print('Done')
+        uuid_str = str(uuid.uuid4())
+        service_client(objects[object_name]['name'] + '_' + uuid_str,
+                    objects[object_name]['sdf'],
+                    objects[object_name]['name'] + '_' + uuid_str,
+                    poses[location]['pose'],
+                    'world')
+        print('Done')
 
 
 if __name__ == '__main__':

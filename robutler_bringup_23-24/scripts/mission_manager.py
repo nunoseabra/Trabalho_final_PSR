@@ -161,6 +161,19 @@ def main():
                                                  location='bedroom',
                                                  goal_publisher=goal_publisher))
 
+    entry = menu_handler.insert("livingroom", parent=h_first_entry,
+                                callback=partial(moveTo,
+                                                 x=0.987, y=0.039, z=0,
+                                                 R=0, P=0, Y=0,
+                                                 location='livingroom',
+                                                 goal_publisher=goal_publisher))
+    
+    entry = menu_handler.insert("gym", parent=h_first_entry,
+                                callback=partial(moveTo,
+                                                 x=1.344, y=2.1515, z=0,
+                                                 R=0, P=0.003175, Y=0.706,
+                                                 location='gym',
+                                                 goal_publisher=goal_publisher))
     # entry = menu_handler.insert("living room", parent=h_first_entry, callback=moveToLivingRoom)
     
     h_second_entry = menu_handler.insert("Do")
