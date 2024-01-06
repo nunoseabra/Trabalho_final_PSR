@@ -5,6 +5,7 @@
     <arg name="y_pos" default="0.109834"/>
     <arg name="z_pos" default="0.0"/>
     <arg name="use_navigation" default="true"/>
+    <arg name="use_yolo" default="true"/>
 
     <param name="robot_description" command="$(find xacro)/xacro $(find robutler_description_23-24)/urdf/robutler.urdf.xacro" />
 
@@ -21,6 +22,9 @@
         </include>
     </group>
 
-
+    <group if="$(arg use_yolo)">
+        <include file="$(find darknet_ros)/launch/yolo_v3.launch">
+            </include>
+    </group>
 
 </launch>
