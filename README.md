@@ -10,6 +10,7 @@ roslaunch robutler_bringup_23-24 gazebo.launch
 
 roslaunch robutler_bringup_23-24 bringup.launch
 
+
 <---------- Navigation ----------->
 roslaunch robutler_navigation_23-24 navigation.launch
 
@@ -26,7 +27,7 @@ rosrun map_server map_saver -f my_map
 
 
 <---------- Tele control ----------->
-rosrun robutler_bringup_23-24 turtlebot3_teleop_key 
+rosrun robutler_bringup_23-24 teleop.py
 
 rosrun robutler_bringup_23-24 mission_manager.py
 
