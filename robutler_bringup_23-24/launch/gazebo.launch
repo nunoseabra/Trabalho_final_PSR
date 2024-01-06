@@ -2,7 +2,7 @@
 <launch>
 
     <include file="$(find gazebo_ros)/launch/empty_world.launch">
-        <arg name="world_name" value="$(find turtlebot3_gazebo)/worlds/small_house.world"/>
+        <arg name="world_name" value="$(find robutler_bringup_23-24)/worlds/small_house.world"/>
         <arg name="paused" value="false"/>
         <arg name="use_sim_time" value="true"/>
         <arg name="gui" value="true"/>
