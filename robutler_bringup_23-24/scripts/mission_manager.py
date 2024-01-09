@@ -5,9 +5,10 @@ import rospy
 from interactive_markers.interactive_marker_server import *
 from interactive_markers.menu_handler import *
 from visualization_msgs.msg import *
-
+import rospkg
+from gazebo_msgs.srv import SpawnModel
 from geometry_msgs.msg import Pose, Point, Quaternion, PoseStamped
-
+import uuid
 from tf.transformations import quaternion_from_euler
 from move_base_msgs.msg import MoveBaseActionResult
 
@@ -128,6 +129,57 @@ def moveTo(feedback, x, y, z, R, P, Y, location, goal_publisher):
 
     print('move base completed goal with result ' + str(result_msg))
 
+def find(feedback, x, y, z, R, P, Y,location, object, goal_publisher):
+    print('Finding ' + object + ' in the ' + location)
+    
+    if location=='bedroom':
+        partial(moveTo,x, y, z, R, P, Y, location, goal_publisher)
+        spawn(object,location)
+
+    elif location=='gym':
+        partial(moveTo,x, y, z, R, P, Y, location, goal_publisher)
+        spawn(object,location)
+
+    
+    
+def spawn(object,location):
+
+    rospack = rospkg.RosPack()
+    package_path = rospack.get_path('robutler_description_23-24') + '/models/'
+
+    poses = {}
+
+    # on bed pose
+    p = Pose()
+    p.position = Point(x=-6.033466, y=1.971232, z=0.644345)
+    q = quaternion_from_euler(0, 0, 0)  # From euler angles (rpy) to quaternion
+    p.orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
+    poses['bedroom'] = {'pose': p}
+    
+    p.position = Point(x=1.344, y=2.1515, z=0)
+    q = quaternion_from_euler(0, 0, 0)  # From euler angles (rpy) to quaternion
+    p.orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
+    poses['gym'] = {'pose': p}
+    
+    objects = {}
+
+    f = open(package_path + 'sphere_v/model.sdf', 'r')
+    objects['ball'] = {'name': 'sphere_v', 'sdf': f.read()}
+
+    # add object person_standing
+    f = open(package_path + 'person_standing/model.sdf', 'r')
+    objects['person'] = {'name': 'person_standing', 'sdf': f.read()}
+
+    service_name = 'gazebo/spawn_sdf_model'
+
+    service_client = rospy.ServiceProxy(service_name, SpawnModel)
+
+    uuid_str = str(uuid.uuid4())
+    service_client(objects[object]['name'] + '_' + uuid_str,
+                    objects[object]['sdf'],
+                    objects[object]['name'] + '_' + uuid_str,
+                    poses[location]['pose'],
+                    'world')
 
 def main():
 
@@ -176,15 +228,39 @@ def main():
                                                  goal_publisher=goal_publisher))
     # entry = menu_handler.insert("living room", parent=h_first_entry, callback=moveToLivingRoom)
     
-    h_second_entry = menu_handler.insert("Do")
+    h_second_entry = menu_handler.insert("Find")
 
-    entry = menu_handler.insert("kitchen", parent=h_second_entry,
-                                callback=partial(moveTo,
-                                                 x=6.568593, y=-1.788789, z=0,
-                                                 R=0, P=0, Y=-1.504141,
-                                                 location='kitchen',
+    sub_handler1 = menu_handler.insert("red ball", parent=h_second_entry)
+
+    entry = menu_handler.insert("in the bedroom", parent=sub_handler1,
+                                callback=partial(find,
+                                                 x=-4.409525, y=-0.182006, z=0,
+                                                 R=-0.000007, P=0.003198, Y=1.980398,
+                                                 location='bedroom',object='ball',
+                                                 goal_publisher=goal_publisher))
+    
+    entry = menu_handler.insert("in the gym", parent=sub_handler1,
+                                callback=partial(find,
+                                                 x=1.344, y=2.1515, z=0,
+                                                 R=0, P=0.003175, Y=0.706,
+                                                 location='gym',object='ball',
                                                  goal_publisher=goal_publisher))
 
+    sub_handler1 = menu_handler.insert("person", parent=h_second_entry)
+    
+    entry = menu_handler.insert("in the room", parent=sub_handler1,
+                                callback=partial(moveTo,
+                                                 x=-4.409525, y=-0.182006, z=0,
+                                                 R=-0.000007, P=0.003198, Y=1.980398,
+                                                 location='bedroom', color='violet',object='person',
+                                                 goal_publisher=goal_publisher))
+    
+    entry = menu_handler.insert("in the gym", parent=sub_handler1,
+                                callback=partial(moveTo,
+                                                 x=1.344, y=2.1515, z=0,
+                                                 R=0, P=0.003175, Y=0.706,
+                                                 location='gym', color='violet',object='person',
+                                                 goal_publisher=goal_publisher))
 
     makeMenuMarker("marker1")
 
