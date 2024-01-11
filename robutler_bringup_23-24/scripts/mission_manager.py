@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from functools import partial
+import subprocess
 import rospy
 from interactive_markers.interactive_marker_server import *
 from interactive_markers.menu_handler import *
@@ -19,6 +20,7 @@ menu_handler = MenuHandler()
 
 h_first_entry = 0
 h_mode_last = 0
+
 
 
 def enableCb(feedback):
@@ -102,6 +104,11 @@ def makeMenuMarker(name):
 def deepCb(feedback):
     rospy.loginfo("The deep sub-menu has been found.")
 
+def move_and_find(feedback,x, y, z, R, P, Y, location, color, object, goal_publisher):
+    moveTo(feedback,x, y, z, R, P, Y, location, goal_publisher)
+    find(location,object)
+    
+
 
 def moveTo(feedback, x, y, z, R, P, Y, location, goal_publisher):
 
@@ -129,57 +136,30 @@ def moveTo(feedback, x, y, z, R, P, Y, location, goal_publisher):
 
     print('move base completed goal with result ' + str(result_msg))
 
-def find(feedback, x, y, z, R, P, Y,location, object, goal_publisher):
+def find(location, object):
     print('Finding ' + object + ' in the ' + location)
-    
+
+    locations={'on_bed','on_bed_side_table','on_corner_chair'}
+
     if location=='bedroom':
-        partial(moveTo,x, y, z, R, P, Y, location, goal_publisher)
-        spawn(object,location)
+        
+        for loc in locations:
+        
+            bashCommand = "rosrun robutler_bringup_23-24 spawn_object.py -l " + str(loc) + " -o "  + str(object)
+            nav_process = subprocess.Popen(bashCommand.split())
+            output, error = nav_process.communicate()
+        
 
     elif location=='gym':
-        partial(moveTo,x, y, z, R, P, Y, location, goal_publisher)
-        spawn(object,location)
 
+        for loc in locations:
+
+            bashCommand = "rosrun robutler_bringup_23-24 spawn_object.py -l " + str(loc) + " -o "  + str(object)
+            nav_process = subprocess.Popen(bashCommand.split())
+            output, error = nav_process.communicate()
+        
+        
     
-    
-def spawn(object,location):
-
-    rospack = rospkg.RosPack()
-    package_path = rospack.get_path('robutler_description_23-24') + '/models/'
-
-    poses = {}
-
-    # on bed pose
-    p = Pose()
-    p.position = Point(x=-6.033466, y=1.971232, z=0.644345)
-    q = quaternion_from_euler(0, 0, 0)  # From euler angles (rpy) to quaternion
-    p.orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
-    poses['bedroom'] = {'pose': p}
-    
-    p.position = Point(x=1.344, y=2.1515, z=0)
-    q = quaternion_from_euler(0, 0, 0)  # From euler angles (rpy) to quaternion
-    p.orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
-    poses['gym'] = {'pose': p}
-    
-    objects = {}
-
-    f = open(package_path + 'sphere_v/model.sdf', 'r')
-    objects['ball'] = {'name': 'sphere_v', 'sdf': f.read()}
-
-    # add object person_standing
-    f = open(package_path + 'person_standing/model.sdf', 'r')
-    objects['person'] = {'name': 'person_standing', 'sdf': f.read()}
-
-    service_name = 'gazebo/spawn_sdf_model'
-
-    service_client = rospy.ServiceProxy(service_name, SpawnModel)
-
-    uuid_str = str(uuid.uuid4())
-    service_client(objects[object]['name'] + '_' + uuid_str,
-                    objects[object]['sdf'],
-                    objects[object]['name'] + '_' + uuid_str,
-                    poses[location]['pose'],
-                    'world')
 
 def main():
 
@@ -232,31 +212,31 @@ def main():
 
     sub_handler1 = menu_handler.insert("red ball", parent=h_second_entry)
 
-    entry = menu_handler.insert("in the bedroom", parent=sub_handler1,
-                                callback=partial(find,
+    entry = menu_handler.insert("In the bedroom", parent=sub_handler1,
+                                callback=partial(move_and_find,
                                                  x=-4.409525, y=-0.182006, z=0,
                                                  R=-0.000007, P=0.003198, Y=1.980398,
-                                                 location='bedroom',object='ball',
+                                                 location='bedroom',color='red', object='ball',
                                                  goal_publisher=goal_publisher))
     
-    entry = menu_handler.insert("in the gym", parent=sub_handler1,
-                                callback=partial(find,
+    entry = menu_handler.insert("In the gym", parent=sub_handler1,
+                                callback=partial(move_and_find,
                                                  x=1.344, y=2.1515, z=0,
                                                  R=0, P=0.003175, Y=0.706,
-                                                 location='gym',object='ball',
+                                                 location='gym',color='red',object='ball',
                                                  goal_publisher=goal_publisher))
 
     sub_handler1 = menu_handler.insert("person", parent=h_second_entry)
     
-    entry = menu_handler.insert("in the room", parent=sub_handler1,
-                                callback=partial(moveTo,
+    entry = menu_handler.insert("In the room", parent=sub_handler1,
+                                callback=partial(move_and_find,
                                                  x=-4.409525, y=-0.182006, z=0,
                                                  R=-0.000007, P=0.003198, Y=1.980398,
                                                  location='bedroom', color='violet',object='person',
                                                  goal_publisher=goal_publisher))
     
-    entry = menu_handler.insert("in the gym", parent=sub_handler1,
-                                callback=partial(moveTo,
+    entry = menu_handler.insert("In the gym", parent=sub_handler1,
+                                callback=partial(move_and_find,
                                                  x=1.344, y=2.1515, z=0,
                                                  R=0, P=0.003175, Y=0.706,
                                                  location='gym', color='violet',object='person',

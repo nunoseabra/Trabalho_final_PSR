@@ -21,10 +21,11 @@
         <include file="$(find robutler_navigation_23-24)/launch/navigation.launch">
         </include>
     </group>
-
+    
+    <!--
     <group if="$(arg use_yolo)">
         <include file="$(find darknet_ros)/launch/yolo_v3.launch">
             </include>
     </group>
-
+    -->
 </launch>

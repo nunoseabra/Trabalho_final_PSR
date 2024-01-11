@@ -57,11 +57,11 @@ def main():
 
     # add object sphere_v
     f = open(package_path + 'sphere_v/model.sdf', 'r')
-    objects['sphere_v'] = {'name': 'sphere_v', 'sdf': f.read()}
+    objects['ball'] = {'name': 'sphere_v', 'sdf': f.read()}
 
     # add object person_standing
     f = open(package_path + 'person_standing/model.sdf', 'r')
-    objects['person_standing'] = {'name': 'person_standing', 'sdf': f.read()}
+    objects['person'] = {'name': 'person_standing', 'sdf': f.read()}
 
     # Check if given object and location are valid
 
