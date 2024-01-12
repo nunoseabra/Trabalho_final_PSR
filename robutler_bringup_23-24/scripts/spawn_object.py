@@ -52,6 +52,24 @@ def main():
     p.orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
     poses['on_corner_chair'] = {'pose': p}
 
+    p = Pose()
+    p.position = Point(x=4.275414, y=4.966099, z=0)
+    q = quaternion_from_euler(0, 0, 0)  # From euler angles (rpy) to quaternion
+    p.orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
+    poses['on_corner'] = {'pose': p}
+
+    p = Pose()
+    p.position = Point(x=3.098027, y=3.135295, z=0.38)
+    q = quaternion_from_euler(0, 0, 0)  # From euler angles (rpy) to quaternion
+    p.orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
+    poses['on_exercise_bench'] = {'pose': p}    
+
+    p = Pose()
+    p.position = Point(x=-0.51, y=4.061939, z=0.399)
+    q = quaternion_from_euler(0, 0, 0)  # From euler angles (rpy) to quaternion
+    p.orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
+    poses['on_table'] = {'pose': p}  
+
     # define objects
     objects = {}
 

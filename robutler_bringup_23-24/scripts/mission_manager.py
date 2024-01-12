@@ -107,7 +107,11 @@ def deepCb(feedback):
 def move_and_find(feedback,x, y, z, R, P, Y, location, color, object, goal_publisher):
     moveTo(feedback,x, y, z, R, P, Y, location, goal_publisher)
     find(location,object)
-    
+
+    #bashCommand = "roslaunch darknet_ros darknet_ros.launch"      
+    #nav_process = subprocess.Popen(bashCommand.split())
+    #output, error = nav_process.communicate()
+        
 
 
 def moveTo(feedback, x, y, z, R, P, Y, location, goal_publisher):
@@ -139,11 +143,12 @@ def moveTo(feedback, x, y, z, R, P, Y, location, goal_publisher):
 def find(location, object):
     print('Finding ' + object + ' in the ' + location)
 
-    locations={'on_bed','on_bed_side_table','on_corner_chair'}
+    room_locations={'on_bed','on_bed_side_table','on_corner_chair'}
+    gym_locations={'on_table','on_exercise_bench','on_corner'}
 
     if location=='bedroom':
         
-        for loc in locations:
+        for loc in room_locations:
         
             bashCommand = "rosrun robutler_bringup_23-24 spawn_object.py -l " + str(loc) + " -o "  + str(object)
             nav_process = subprocess.Popen(bashCommand.split())
@@ -152,7 +157,7 @@ def find(location, object):
 
     elif location=='gym':
 
-        for loc in locations:
+        for loc in gym_locations:
 
             bashCommand = "rosrun robutler_bringup_23-24 spawn_object.py -l " + str(loc) + " -o "  + str(object)
             nav_process = subprocess.Popen(bashCommand.split())
