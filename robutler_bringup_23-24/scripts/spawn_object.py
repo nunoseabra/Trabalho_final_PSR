@@ -87,17 +87,17 @@ def main():
     f = open(package_path + 'person_standing/model.sdf', 'r')
     objects['person'] = {'name': 'person_standing', 'sdf': f.read()}
 
-    # add object person_standing
-    f = open(package_path + 'person_standing/model.sdf', 'r')
-    objects['person'] = {'name': 'person_standing', 'sdf': f.read()}
+    # add object coca cola can
+    f = open(package_path + 'coca_cola/model.sdf', 'r')
+    objects['can_coke'] = {'name': 'coca_cola', 'sdf': f.read()}
 
-    # add object person_standing
-    f = open(package_path + 'can_coke/model.sdf', 'r')
-    objects['can_coke'] = {'name': 'can_coke', 'sdf': f.read()}
+     # add object laptop
+    f = open(package_path + 'laptop_pc_1/model.sdf', 'r')
+    objects['pc'] = {'name': 'laptop_pc_1', 'sdf': f.read()}
 
-     # add object person_standing
-    f = open(package_path + 'laptop_pc_2/model.sdf', 'r')
-    objects['pc'] = {'name': 'laptop_pc_2', 'sdf': f.read()}
+     # add object bottle red wine
+    f = open(package_path + 'bottle_red_wine/model.sdf', 'r')
+    objects['bootle'] = {'name': 'bottle_red_wine', 'sdf': f.read()}
     
 
     # Check if given object and location are valid

@@ -284,6 +284,12 @@ def main():
                                                  location='table_bedroom', object='can_coke',
                                                  goal_publisher=goal_publisher))
     
+    entry = menu_handler.insert("Bootle of wine is on the table", parent=h_fourth_entry,
+                                callback=partial(check,
+                                                 x=-7.622083, y=0.526304, z=-0.001006,
+                                                 R=-0.000007, P=0.003169, Y=2.379986,
+                                                 location='table_bedroom', object='bottle',
+                                                 goal_publisher=goal_publisher))
 
     makeMenuMarker("marker1")
 
