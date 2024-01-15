@@ -70,6 +70,12 @@ def main():
     p.orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
     poses['on_table'] = {'pose': p}  
 
+    p = Pose()
+    p.position = Point(x=-9.039542, y=1.732741, z=0.750497)
+    q = quaternion_from_euler(0, 0, 0)  # From euler angles (rpy) to quaternion
+    p.orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
+    poses['table_bedroom'] = {'pose': p} 
+
     # define objects
     objects = {}
 
@@ -80,6 +86,19 @@ def main():
     # add object person_standing
     f = open(package_path + 'person_standing/model.sdf', 'r')
     objects['person'] = {'name': 'person_standing', 'sdf': f.read()}
+
+    # add object person_standing
+    f = open(package_path + 'person_standing/model.sdf', 'r')
+    objects['person'] = {'name': 'person_standing', 'sdf': f.read()}
+
+    # add object person_standing
+    f = open(package_path + 'bottle/model.sdf', 'r')
+    objects['bottle'] = {'name': 'bottle', 'sdf': f.read()}
+
+     # add object person_standing
+    f = open(package_path + 'laptop/model.sdf', 'r')
+    objects['pc'] = {'name': 'laptop', 'sdf': f.read()}
+    
 
     # Check if given object and location are valid
 

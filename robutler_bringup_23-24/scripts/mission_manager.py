@@ -104,6 +104,7 @@ def makeMenuMarker(name):
 def deepCb(feedback):
     rospy.loginfo("The deep sub-menu has been found.")
 
+
 def move_and_find(feedback,x, y, z, R, P, Y, location, color, object, goal_publisher):
     moveTo(feedback,x, y, z, R, P, Y, location, goal_publisher)
     find(location,object)
@@ -111,7 +112,6 @@ def move_and_find(feedback,x, y, z, R, P, Y, location, color, object, goal_publi
     #bashCommand = "roslaunch darknet_ros darknet_ros.launch"      
     #nav_process = subprocess.Popen(bashCommand.split())
     #output, error = nav_process.communicate()
-        
 
 
 def moveTo(feedback, x, y, z, R, P, Y, location, goal_publisher):
@@ -140,6 +140,7 @@ def moveTo(feedback, x, y, z, R, P, Y, location, goal_publisher):
 
     print('move base completed goal with result ' + str(result_msg))
 
+
 def find(location, object):
     print('Finding ' + object + ' in the ' + location)
 
@@ -163,8 +164,25 @@ def find(location, object):
             nav_process = subprocess.Popen(bashCommand.split())
             output, error = nav_process.communicate()
         
-        
+def take_picture(feedback):
+
+    bashCommand = "rosrun perception_robutler take_picture.py"
+    nav_process = subprocess.Popen(bashCommand.split())
+    output, error = nav_process.communicate()
+            
+
+def check(feedback,x,y,z,R,P,Y,location,object,goal_publisher):
+    moveTo(feedback,x, y, z, R, P, Y, location, goal_publisher)
+
+    if object== 'pc':
+        bashCommand = "rosrun robutler_bringup_23-24 spawn_object.py -l " + str(location) + " -o "  + str(object)
+        nav_process = subprocess.Popen(bashCommand.split())
+        output, error = nav_process.communicate()
     
+    elif object=='bottle':
+        bashCommand = "rosrun robutler_bringup_23-24 spawn_object.py -l " + str(location) + " -o " + str(object)
+        nav_process = subprocess.Popen(bashCommand.split())
+        output, error = nav_process.communicate()
 
 def main():
 
@@ -246,6 +264,26 @@ def main():
                                                  R=0, P=0.003175, Y=0.706,
                                                  location='gym', color='violet',object='person',
                                                  goal_publisher=goal_publisher))
+
+    h_third_entry = menu_handler.insert("Take picture", callback=take_picture)
+
+    h_fourth_entry = menu_handler.insert("Check if")
+
+
+    entry = menu_handler.insert("Pc is on the table", parent=h_fourth_entry,
+                                callback=partial(check,
+                                                 x=-7.622083, y=0.526304, z=-0.001006,
+                                                 R=-0.000007, P=0.003169, Y=2.379986,
+                                                 location='table_bedroom', object='pc',
+                                                 goal_publisher=goal_publisher))
+    
+    entry = menu_handler.insert("Bootle is on the table", parent=h_fourth_entry,
+                                callback=partial(check,
+                                                 x=-7.622083, y=0.526304, z=-0.001006,
+                                                 R=-0.000007, P=0.003169, Y=2.379986,
+                                                 location='table_bedroom', object='bottle',
+                                                 goal_publisher=goal_publisher))
+    
 
     makeMenuMarker("marker1")
 
