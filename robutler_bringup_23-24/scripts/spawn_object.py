@@ -92,12 +92,12 @@ def main():
     objects['person'] = {'name': 'person_standing', 'sdf': f.read()}
 
     # add object person_standing
-    f = open(package_path + 'bottle/model.sdf', 'r')
-    objects['bottle'] = {'name': 'bottle', 'sdf': f.read()}
+    f = open(package_path + 'can_coke/model.sdf', 'r')
+    objects['can_coke'] = {'name': 'can_coke', 'sdf': f.read()}
 
      # add object person_standing
-    f = open(package_path + 'laptop/model.sdf', 'r')
-    objects['pc'] = {'name': 'laptop', 'sdf': f.read()}
+    f = open(package_path + 'laptop_pc_2/model.sdf', 'r')
+    objects['pc'] = {'name': 'laptop_pc_2', 'sdf': f.read()}
     
 
     # Check if given object and location are valid

@@ -233,20 +233,20 @@ def main():
     
     h_second_entry = menu_handler.insert("Find")
 
-    sub_handler1 = menu_handler.insert("red ball", parent=h_second_entry)
+    sub_handler1 = menu_handler.insert("violet ball", parent=h_second_entry)
 
     entry = menu_handler.insert("In the bedroom", parent=sub_handler1,
                                 callback=partial(move_and_find,
                                                  x=-4.409525, y=-0.182006, z=0,
                                                  R=-0.000007, P=0.003198, Y=1.980398,
-                                                 location='bedroom',color='red', object='ball',
+                                                 location='bedroom',color='violet', object='ball',
                                                  goal_publisher=goal_publisher))
     
     entry = menu_handler.insert("In the gym", parent=sub_handler1,
                                 callback=partial(move_and_find,
                                                  x=1.344, y=2.1515, z=0,
                                                  R=0, P=0.003175, Y=0.706,
-                                                 location='gym',color='red',object='ball',
+                                                 location='gym',color='violet',object='ball',
                                                  goal_publisher=goal_publisher))
 
     sub_handler1 = menu_handler.insert("person", parent=h_second_entry)
@@ -277,11 +277,11 @@ def main():
                                                  location='table_bedroom', object='pc',
                                                  goal_publisher=goal_publisher))
     
-    entry = menu_handler.insert("Bootle is on the table", parent=h_fourth_entry,
+    entry = menu_handler.insert("Can of coke is on the table", parent=h_fourth_entry,
                                 callback=partial(check,
                                                  x=-7.622083, y=0.526304, z=-0.001006,
                                                  R=-0.000007, P=0.003169, Y=2.379986,
-                                                 location='table_bedroom', object='bottle',
+                                                 location='table_bedroom', object='can_coke',
                                                  goal_publisher=goal_publisher))
     
 
