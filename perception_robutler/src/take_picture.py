@@ -14,7 +14,9 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 # Launch gazebo world prior to run this script
 
 from __future__ import print_function
+import subprocess
 import sys
+import uuid
 import rospy
 import cv2
 from std_msgs.msg import String
@@ -66,6 +68,10 @@ if __name__ == '__main__':
     camera = TakePhoto(save_path='/home/nunomsfs/catkin_ws/src/Trabalho_final_PSR/perception_robutler/images')
     # Use '_image_title' parameter from command line
     # Default value is 'photo.jpg'
+    #uuid_str = str(uuid.uuid4())
+    #name= "picture_"+uuid_str+".jpg"
+    #bashCommand = 'rosrun perception_robutler take_picture.py _image_title:=name '
+    #check_process = subprocess.Popen(bashCommand.split())
     img_title = rospy.get_param('~image_title', 'photo.jpg')
     # use the command: python take_photo.py _image_title:="new_title.jpg" 
     # to set the param
