@@ -72,7 +72,7 @@ def main():
 
     p = Pose()
     p.position = Point(x=-9.039542, y=1.732741, z=0.750497)
-    q = quaternion_from_euler(0, 0, 0)  # From euler angles (rpy) to quaternion
+    q = quaternion_from_euler(0, 0, 0.75)  # From euler angles (rpy) to quaternion
     p.orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
     poses['table_bedroom'] = {'pose': p} 
 
@@ -97,7 +97,7 @@ def main():
 
      # add object bottle red wine
     f = open(package_path + 'bottle_red_wine/model.sdf', 'r')
-    objects['bootle'] = {'name': 'bottle_red_wine', 'sdf': f.read()}
+    objects['bottle'] = {'name': 'bottle_red_wine', 'sdf': f.read()}
     
 
     # Check if given object and location are valid

@@ -172,8 +172,7 @@ def take_picture(feedback):
             
 
 def check(feedback,x,y,z,R,P,Y,location,object,goal_publisher):
-    moveTo(feedback,x, y, z, R, P, Y, location, goal_publisher)
-
+    
     if object== 'pc':
         bashCommand = "rosrun robutler_bringup_23-24 spawn_object.py -l " + str(location) + " -o "  + str(object)
         nav_process = subprocess.Popen(bashCommand.split())
@@ -183,6 +182,8 @@ def check(feedback,x,y,z,R,P,Y,location,object,goal_publisher):
         bashCommand = "rosrun robutler_bringup_23-24 spawn_object.py -l " + str(location) + " -o " + str(object)
         nav_process = subprocess.Popen(bashCommand.split())
         output, error = nav_process.communicate()
+
+    moveTo(feedback,x, y, z, R, P, Y, location, goal_publisher)
 
 def main():
 
