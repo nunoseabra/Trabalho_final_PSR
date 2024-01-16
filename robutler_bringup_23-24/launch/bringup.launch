@@ -30,4 +30,6 @@
             </include>
     </group>
     
+    <node pkg="robutler_bringup_23-24" type="mission_manager.py" name="mission_manager" output="screen"/>
+      
 </launch>

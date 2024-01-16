@@ -110,8 +110,8 @@ def move_and_find(feedback,x, y, z, R, P, Y, location, color, object, goal_publi
     find(location,object)
 
     #bashCommand = "roslaunch darknet_ros darknet_ros.launch"      
-    #nav_process = subprocess.Popen(bashCommand.split())
-    #output, error = nav_process.communicate()
+    #find_process = subprocess.Popen(bashCommand.split())
+    #output, error = find_process.communicate()
 
 
 def moveTo(feedback, x, y, z, R, P, Y, location, goal_publisher):
@@ -152,38 +152,50 @@ def find(location, object):
         for loc in room_locations:
         
             bashCommand = "rosrun robutler_bringup_23-24 spawn_object.py -l " + str(loc) + " -o "  + str(object)
-            nav_process = subprocess.Popen(bashCommand.split())
-            output, error = nav_process.communicate()
-        
+            find_process = subprocess.Popen(bashCommand.split())
+            output, error = find_process.communicate()
+
+            bashCommand = "roslaunch darknet_ros darknet_ros.launch"
+            find_process = subprocess.Popen(bashCommand.split())
 
     elif location=='gym':
 
         for loc in gym_locations:
 
             bashCommand = "rosrun robutler_bringup_23-24 spawn_object.py -l " + str(loc) + " -o "  + str(object)
-            nav_process = subprocess.Popen(bashCommand.split())
-            output, error = nav_process.communicate()
+            find_process = subprocess.Popen(bashCommand.split())
+            output, error = find_process.communicate()
+
+            bashCommand = "roslaunch darknet_ros darknet_ros.launch"
+            find_process = subprocess.Popen(bashCommand.split())
+
+    find_process.kill()
         
 def take_picture(feedback):
 
     bashCommand = "rosrun perception_robutler take_picture.py"
-    nav_process = subprocess.Popen(bashCommand.split())
-    output, error = nav_process.communicate()
+    picture_process = subprocess.Popen(bashCommand.split())
+    output, error = picture_process.communicate()
             
 
 def check(feedback,x,y,z,R,P,Y,location,object,goal_publisher):
     
     if object== 'pc':
         bashCommand = "rosrun robutler_bringup_23-24 spawn_object.py -l " + str(location) + " -o "  + str(object)
-        nav_process = subprocess.Popen(bashCommand.split())
-        output, error = nav_process.communicate()
+        check_process = subprocess.Popen(bashCommand.split())
+        output, error = check_process.communicate()
     
     elif object=='bottle':
         bashCommand = "rosrun robutler_bringup_23-24 spawn_object.py -l " + str(location) + " -o " + str(object)
-        nav_process = subprocess.Popen(bashCommand.split())
-        output, error = nav_process.communicate()
+        check_process = subprocess.Popen(bashCommand.split())
+        output, error = check_process.communicate()
 
     moveTo(feedback,x, y, z, R, P, Y, location, goal_publisher)
+
+    #if sucess:
+    #   bashCommand = "roslaunch darknet_ros darknet_ros.launch"
+    #   find_process = subprocess.Popen(bashCommand.split())
+    #   find_process.kill()
 
 def main():
 
