@@ -12,6 +12,7 @@ from geometry_msgs.msg import Pose, Point, Quaternion, PoseStamped
 import uuid
 from tf.transformations import quaternion_from_euler
 from move_base_msgs.msg import MoveBaseActionResult
+import cv2
 
 server = None
 marker_pos = 1
@@ -152,22 +153,22 @@ def find(location, object):
         for loc in room_locations:
         
             bashCommand = "rosrun robutler_bringup_23-24 spawn_object.py -l " + str(loc) + " -o "  + str(object)
-            find_process = subprocess.Popen(bashCommand.split())
-            output, error = find_process.communicate()
+            spawn_process = subprocess.Popen(bashCommand.split())
+            output, error = spawn_process.communicate()
 
-            bashCommand = "roslaunch darknet_ros darknet_ros.launch"
-            find_process = subprocess.Popen(bashCommand.split())
+        bashCommand = "roslaunch darknet_ros darknet_ros.launch"
+        find_process = subprocess.Popen(bashCommand.split())
 
     elif location=='gym':
 
         for loc in gym_locations:
 
             bashCommand = "rosrun robutler_bringup_23-24 spawn_object.py -l " + str(loc) + " -o "  + str(object)
-            find_process = subprocess.Popen(bashCommand.split())
-            output, error = find_process.communicate()
+            spawn_process = subprocess.Popen(bashCommand.split())
+            output, error = spawn_process.communicate()
 
-            bashCommand = "roslaunch darknet_ros darknet_ros.launch"
-            find_process = subprocess.Popen(bashCommand.split())
+        bashCommand = "roslaunch darknet_ros darknet_ros.launch"
+        find_process = subprocess.Popen(bashCommand.split())
 
     find_process.kill()
         
@@ -191,11 +192,21 @@ def check(feedback,x,y,z,R,P,Y,location,object,goal_publisher):
         output, error = check_process.communicate()
 
     moveTo(feedback,x, y, z, R, P, Y, location, goal_publisher)
+    bashCommand = "roslaunch darknet_ros darknet_ros.launch"
+    check_process = subprocess.Popen(bashCommand.split())
 
+    while True:
+        key = cv2.waitKey(1)
+
+        if key == ord('w'):  
+    
+            check_process.kill()
+        break
+    print('Object found!')
     #if sucess:
     #   bashCommand = "roslaunch darknet_ros darknet_ros.launch"
     #   find_process = subprocess.Popen(bashCommand.split())
-    #   find_process.kill()
+    #   check_process.kill()
 
 def main():
 
