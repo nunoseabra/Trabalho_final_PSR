@@ -81,7 +81,15 @@ def main():
 
     # add object sphere_v
     f = open(package_path + 'sphere_v/model.sdf', 'r')
-    objects['ball'] = {'name': 'sphere_v', 'sdf': f.read()}
+    objects['violet_ball'] = {'name': 'sphere_v', 'sdf': f.read()}
+
+    # add object sphere_r
+    f = open(package_path + 'sphere_r/model.sdf', 'r')
+    objects['red_ball'] = {'name': 'sphere_r', 'sdf': f.read()}
+
+    # add object sphere_b
+    f = open(package_path + 'sphere_b/model.sdf', 'r')
+    objects['blue_ball'] = {'name': 'sphere_b', 'sdf': f.read()}
 
     # add object person_standing
     f = open(package_path + 'person_standing/model.sdf', 'r')

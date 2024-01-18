@@ -108,7 +108,7 @@ def deepCb(feedback):
 
 def move_and_find(feedback,x, y, z, R, P, Y, location, color, object, goal_publisher):
     moveTo(feedback,x, y, z, R, P, Y, location, goal_publisher)
-    find(location,object)
+    find(location,color,object)
 
     #bashCommand = "roslaunch darknet_ros darknet_ros.launch"      
     #find_process = subprocess.Popen(bashCommand.split())
@@ -142,8 +142,8 @@ def moveTo(feedback, x, y, z, R, P, Y, location, goal_publisher):
     print('move base completed goal with result ' + str(result_msg))
 
 
-def find(location, object):
-    print('Finding ' + object + ' in the ' + location)
+def find(location, color, object):
+    print('Finding ' + object + ' in the ' + location + ' turning on color_segmentation!')
 
     room_locations={'on_bed','on_bed_side_table','on_corner_chair'}
     gym_locations={'on_table','on_exercise_bench','on_corner'}
@@ -156,8 +156,11 @@ def find(location, object):
             spawn_process = subprocess.Popen(bashCommand.split())
             output, error = spawn_process.communicate()
 
-        bashCommand = "roslaunch darknet_ros darknet_ros.launch"
+        bashCommand = "rosrun perception_robutler color_segmentation.py - c " + str(color)
         find_process = subprocess.Popen(bashCommand.split())
+
+        #bashCommand = "roslaunch darknet_ros darknet_ros.launch"
+        #find_process = subprocess.Popen(bashCommand.split())
 
     elif location=='gym':
 
@@ -167,8 +170,11 @@ def find(location, object):
             spawn_process = subprocess.Popen(bashCommand.split())
             output, error = spawn_process.communicate()
 
-        bashCommand = "roslaunch darknet_ros darknet_ros.launch"
+        bashCommand = "rosrun perception_robutler color_segmentation.py - c " + str(color)
         find_process = subprocess.Popen(bashCommand.split())
+
+        #bashCommand = "roslaunch darknet_ros darknet_ros.launch"
+        #find_process = subprocess.Popen(bashCommand.split())
 
     find_process.kill()
         
@@ -257,20 +263,52 @@ def main():
     
     h_second_entry = menu_handler.insert("Find")
 
-    sub_handler1 = menu_handler.insert("violet ball", parent=h_second_entry)
+    sub_handler1 = menu_handler.insert("Violet ball", parent=h_second_entry)
 
     entry = menu_handler.insert("In the bedroom", parent=sub_handler1,
                                 callback=partial(move_and_find,
                                                  x=-4.409525, y=-0.182006, z=0,
                                                  R=-0.000007, P=0.003198, Y=1.980398,
-                                                 location='bedroom',color='violet', object='ball',
+                                                 location='bedroom',color='violet', object='violet_ball',
                                                  goal_publisher=goal_publisher))
     
     entry = menu_handler.insert("In the gym", parent=sub_handler1,
                                 callback=partial(move_and_find,
                                                  x=1.344, y=2.1515, z=0,
                                                  R=0, P=0.003175, Y=0.706,
-                                                 location='gym',color='violet',object='ball',
+                                                 location='gym',color='violet',object='violet_ball',
+                                                 goal_publisher=goal_publisher))
+    
+    sub_handler1 = menu_handler.insert("Red ball", parent=h_second_entry)
+
+    entry = menu_handler.insert("In the bedroom", parent=sub_handler1,
+                                callback=partial(move_and_find,
+                                                 x=-4.409525, y=-0.182006, z=0,
+                                                 R=-0.000007, P=0.003198, Y=1.980398,
+                                                 location='bedroom',color='red', object='red_ball',
+                                                 goal_publisher=goal_publisher))
+    
+    entry = menu_handler.insert("In the gym", parent=sub_handler1,
+                                callback=partial(move_and_find,
+                                                 x=1.344, y=2.1515, z=0,
+                                                 R=0, P=0.003175, Y=0.706,
+                                                 location='gym',color='red',object='red_ball',
+                                                 goal_publisher=goal_publisher))
+    
+    sub_handler1 = menu_handler.insert("Blue ball", parent=h_second_entry)
+
+    entry = menu_handler.insert("In the bedroom", parent=sub_handler1,
+                                callback=partial(move_and_find,
+                                                 x=-4.409525, y=-0.182006, z=0,
+                                                 R=-0.000007, P=0.003198, Y=1.980398,
+                                                 location='bedroom',color='blue', object='blue_ball',
+                                                 goal_publisher=goal_publisher))
+    
+    entry = menu_handler.insert("In the gym", parent=sub_handler1,
+                                callback=partial(move_and_find,
+                                                 x=1.344, y=2.1515, z=0,
+                                                 R=0, P=0.003175, Y=0.706,
+                                                 location='gym',color='blue',object='blue_ball',
                                                  goal_publisher=goal_publisher))
 
     sub_handler1 = menu_handler.insert("person", parent=h_second_entry)
