@@ -106,6 +106,8 @@ def deepCb(feedback):
 
 
 def spawn_object(loc, object):
+    # could be simplified by including spawn_object.py 
+    #-> making it a class -> using a dictionary -> small_house{name,division{name,sections{name,area(placement)}}} 
     bashCommand = (
         "rosrun robutler_bringup_23-24 spawn_object.py -l "
         + str(loc)

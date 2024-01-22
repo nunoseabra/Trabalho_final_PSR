@@ -52,9 +52,11 @@ class TakePhoto:
             # Salva a imagem no caminho configurado
             full_path = f"{self.save_path}/{img_title}"
             cv2.imwrite(full_path, self.image)
+            # Display Picture (waits for user input(used for testing)) #TODO remove user input block
             cv2.imshow("Picture Taken", self.image)
             cv2.waitKey(0)
             cv2.destroyAllWindows()
+
             rospy.loginfo("picture path:" + full_path)
             return full_path  # Retorna o caminho completo onde a imagem foi salva
         else:
@@ -65,10 +67,15 @@ if __name__ == "__main__":
     # Initialize
     rospy.init_node("take_photo", anonymous=False)
 
+    find_path_process = subprocess.check_output(
+        "rospack find perception_robutler", shell=True
+    ).strip()
+    folder_path = find_path_process.decode("utf-8") + "/images"
+    
     # save_path
     camera = TakePhoto(
         # save_path="/home/nunomsfs/catkin_ws/src/Trabalho_final_PSR/perception_robutler/images"
-        save_path="../images"
+        save_path=folder_path
     )
 
     uuid_str = str(uuid.uuid4())
