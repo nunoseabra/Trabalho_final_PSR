@@ -144,11 +144,19 @@ def find(location, color, object):
     print(
         "Finding " + object + " in the " + location + " turning on color_segmentation!"
     )
+    if object == "ball":
 
-    bashCommand = "rosrun perception_robutler color_segmentation.py - c " + str(color)
-    find_process = subprocess.Popen(bashCommand.split())
+        bashCommand = "rosrun perception_robutler color_segmentation.py - c " + str(color)
+        find_process = subprocess.Popen(bashCommand.split())
 
-    find_process.kill()
+        find_process.kill()
+
+    elif object == "person":
+
+        bashCommand = "roslaunch darknet_ros darknet_ros.launch"
+        find_process = subprocess.Popen(bashCommand.split())
+
+
 
 
 def move_and_find(feedback, x, y, z, R, P, Y, location, color, object, goal_publisher):
