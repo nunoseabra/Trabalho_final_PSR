@@ -106,8 +106,8 @@ def deepCb(feedback):
 
 
 def spawn_object(loc, object):
-    # could be simplified by including spawn_object.py 
-    #-> making it a class -> using a dictionary -> small_house{name,division{name,sections{name,area(placement)}}} 
+    # could be simplified by including spawn_object.py
+    # -> making it a class -> using a dictionary -> small_house{name,division{name,sections{name,area(placement)}}}
     bashCommand = (
         "rosrun robutler_bringup_23-24 spawn_object.py -l "
         + str(loc)
@@ -116,25 +116,6 @@ def spawn_object(loc, object):
     )
     spawn_process = subprocess.Popen(bashCommand.split())
     output, error = spawn_process.communicate()
-
-
-def move_and_find(feedback, x, y, z, R, P, Y, location, color, object, goal_publisher):
-    room_locations = {"on_bed", "on_bed_side_table", "on_corner_chair"}
-    gym_locations = {"on_table", "on_exercise_bench", "on_corner"}
-
-    if location == "bedroom":
-        for loc in room_locations:
-            spawn_object(loc, object)
-    elif location == "gym":
-        for loc in gym_locations:
-            spawn_object(loc, object)
-
-    moveTo(feedback, x, y, z, R, P, Y, location, goal_publisher)
-    find(location, color, object)
-
-    # bashCommand = "roslaunch darknet_ros darknet_ros.launch"
-    # find_process = subprocess.Popen(bashCommand.split())
-    # output, error = find_process.communicate()
 
 
 def moveTo(feedback, x, y, z, R, P, Y, location, goal_publisher):
@@ -164,48 +145,29 @@ def find(location, color, object):
         "Finding " + object + " in the " + location + " turning on color_segmentation!"
     )
 
-    # room_locations = {"on_bed", "on_bed_side_table", "on_corner_chair"}
-    # gym_locations = {"on_table", "on_exercise_bench", "on_corner"}
-
-    # if location == "bedroom":
-    #     for loc in room_locations:
-    #         bashCommand = (
-    #             "rosrun robutler_bringup_23-24 spawn_object.py -l "
-    #             + str(loc)
-    #             + " -o "
-    #             + str(object)
-    #         )
-    #         spawn_process = subprocess.Popen(bashCommand.split())
-    #         output, error = spawn_process.communicate()
-
-    #     bashCommand = "rosrun perception_robutler color_segmentation.py - c " + str(
-    #         color
-    #     )
-    #     find_process = subprocess.Popen(bashCommand.split())
-
-    #     # bashCommand = "roslaunch darknet_ros darknet_ros.launch"
-    #     # find_process = subprocess.Popen(bashCommand.split())
-
-    # elif location == "gym":
-    #     for loc in gym_locations:
-    #         bashCommand = (
-    #             "rosrun robutler_bringup_23-24 spawn_object.py -l "
-    #             + str(loc)
-    #             + " -o "
-    #             + str(object)
-    #         )
-    #         spawn_process = subprocess.Popen(bashCommand.split())
-    #         output, error = spawn_process.communicate()
-
-    bashCommand = "rosrun perception_robutler color_segmentation.py - c " + str(
-        color
-    )
+    bashCommand = "rosrun perception_robutler color_segmentation.py - c " + str(color)
     find_process = subprocess.Popen(bashCommand.split())
 
-        # bashCommand = "roslaunch darknet_ros darknet_ros.launch"
-        # find_process = subprocess.Popen(bashCommand.split())
-
     find_process.kill()
+
+
+def move_and_find(feedback, x, y, z, R, P, Y, location, color, object, goal_publisher):
+    room_locations = {"on_bed", "on_bed_side_table", "on_corner_chair"}
+    gym_locations = {"on_table", "on_exercise_bench", "on_corner"}
+
+    if location == "bedroom":
+        for loc in room_locations:
+            spawn_object(loc, object)
+    elif location == "gym":
+        for loc in gym_locations:
+            spawn_object(loc, object)
+
+    moveTo(feedback, x, y, z, R, P, Y, location, goal_publisher)
+    find(location, color, object)
+
+    # bashCommand = "roslaunch darknet_ros darknet_ros.launch"
+    # find_process = subprocess.Popen(bashCommand.split())
+    # output, error = find_process.communicate()
 
 
 def take_picture(feedback):
