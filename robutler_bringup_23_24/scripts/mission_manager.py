@@ -25,6 +25,8 @@ h_first_entry = 0
 h_mode_last = 0
 
 found_object_listener = None
+objs_Percent = []
+objs_Class = []
 
 
 def enableCb(feedback):
@@ -109,6 +111,7 @@ def deepCb(feedback):
     rospy.loginfo("The deep sub-menu has been found.")
 
 
+# TODO Change spawn_object bashcommand to be a node that creates and remove the object (since I don't think we have a way to remove)
 def spawn_object(loc, object):
     # could be simplified by including spawn_object.py
     # -> making it a class -> using a dictionary -> small_house{name,division{name,sections{name,area(placement)}}}
@@ -141,32 +144,25 @@ def moveTo(feedback, x, y, z, R, P, Y, location, goal_publisher):
     # TODO: change this While to maybe threads, One do the main while the others triggers a flag when result_msg.status.status value = 3
     #                                                                           or lissens to MoveBaseActionStatus  status_msg.status.status = 3
     rospy.loginfo("Target Location (" + location + ") Reached")
-    # print("move base completed goal with result " + str(result_msg))
 
 
 def listening_to_objects(msg):
-    global found_object_listener
+    global found_object_listener, objs_Percent, objs_Class
     rospy.loginfo("MESSAGE RECEIVED: ")
+    objs_Class = []
+    objs_Percent = []
 
     for bbox in msg.bounding_boxes:
-        if bbox.Class == "person" and bbox.probability > 0.5:
-            rospy.loginfo("Found a person")  
+        objs_Class.append(bbox.Class)
+        objs_Percent.append(bbox.probability)
 
     found_object_listener.unregister()
-    rospy.loginfo("Object Found Subscriber unregistered")
+    rospy.loginfo("Bounding Boxes subscriber unregistered")
+    # found_object_listener = False
 
-
-def find(location, color, object):
-    global found_object_listener
-    print(
-        "Finding " + object + " in the " + location + " turning on color_segmentation!"
-    )
-    rospy.loginfo("Object Found Subscriber created")
-    found_object_listener = rospy.Subscriber(
-        "/darknet_ros/bounding_boxes", BoundingBoxes, listening_to_objects
-    )
 
 def move_and_find(feedback, x, y, z, R, P, Y, location, color, object, goal_publisher):
+    global found_object_listener, objs_Class, objs_Percent
     room_locations = {"on_bed", "on_bed_side_table", "on_corner_chair"}
     gym_locations = {"on_table", "on_exercise_bench", "on_corner"}
 
@@ -178,13 +174,24 @@ def move_and_find(feedback, x, y, z, R, P, Y, location, color, object, goal_publ
             spawn_object(loc, object)
 
     moveTo(feedback, x, y, z, R, P, Y, location, goal_publisher)
-    find(location, color, object)
+    print(
+        "Finding " + object + " in the " + location
+    )
 
-    # bashCommand = "roslaunch darknet_ros darknet_ros.launch"
-    # find_process = subprocess.Popen(bashCommand.split())
-    # output, error = find_process.communicate()
+    rospy.loginfo("Bounding Boxes subscriber created")
+    found_object_listener = rospy.Subscriber(
+        "/darknet_ros/bounding_boxes", BoundingBoxes, listening_to_objects
+    )
+    try:
+        while found_object_listener.get_num_connections() >= 0:
+            time.sleep(0.5)
+            continue
+    except:
+        rospy.loginfo("Robutler has found: ")
+        rospy.loginfo(objs_Class)
 
 
+# TODO transfor take_picture to a header and include it here instead of doing bashcommand
 def take_picture(feedback):
     bashCommand = "rosrun perception_robutler take_picture.py"
     picture_process = subprocess.Popen(bashCommand.split())
