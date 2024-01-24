@@ -12,7 +12,10 @@ from geometry_msgs.msg import Pose, Point, Quaternion, PoseStamped
 import uuid
 from tf.transformations import quaternion_from_euler
 from move_base_msgs.msg import MoveBaseActionResult
+from darknet_ros_msgs.msg import BoundingBoxes
+import Obj_found_flag
 import cv2
+import time
 
 server = None
 marker_pos = 1
@@ -21,6 +24,8 @@ menu_handler = MenuHandler()
 
 h_first_entry = 0
 h_mode_last = 0
+
+test_24_01_03_00 = 0
 
 
 def enableCb(feedback):
@@ -109,7 +114,7 @@ def spawn_object(loc, object):
     # could be simplified by including spawn_object.py
     # -> making it a class -> using a dictionary -> small_house{name,division{name,sections{name,area(placement)}}}
     bashCommand = (
-        "rosrun robutler_bringup_23-24 spawn_object.py -l "
+        "rosrun robutler_bringup_23_24 spawn_object.py -l "
         + str(loc)
         + " -o "
         + str(object)
@@ -140,14 +145,37 @@ def moveTo(feedback, x, y, z, R, P, Y, location, goal_publisher):
     # print("move base completed goal with result " + str(result_msg))
 
 
+def listening_to_objects(msg):
+    global test_24_01_03_00
+    rospy.loginfo("Testing ")
+    print("MESSAGE RECEIVED: " + msg)
+    for box in msg.bounding_boxes:
+        print("Boxes print: " + box)
+        rospy.loginfo("Object found: " + box.Class)
+        test_24_01_03_00 += 1
+    obj_flag = rospy.Publisher(
+        "/move_base_simple/obj_flag", , queue_size=1
+    )
+
+
 def find(location, color, object):
+    global test_24_01_03_00
     print(
         "Finding " + object + " in the " + location + " turning on color_segmentation!"
     )
-
+    rospy.loginfo("Object Found Subscriber created")
+    found_object_listener = rospy.Subscriber(
+        "/darknet_ros/found_object", BoundingBoxes, listening_to_objects
+    )
     bashCommand = "rosrun perception_robutler color_segmentation.py - c " + str(color)
     find_process = subprocess.Popen(bashCommand.split())
-
+    while test_24_01_03_00 < 2:
+        rospy.loginfo("still waiting for 4 objects")
+        print(test_24_01_03_00)
+        time.sleep(1)
+        continue
+    found_object_listener.unregister()
+    rospy.loginfo("Object Found Subscriber unregistered")
     find_process.kill()
 
 
@@ -179,7 +207,7 @@ def take_picture(feedback):
 def check(feedback, x, y, z, R, P, Y, location, object, goal_publisher):
     if object == "pc":
         bashCommand = (
-            "rosrun robutler_bringup_23-24 spawn_object.py -l "
+            "rosrun robutler_bringup_23_24 spawn_object.py -l "
             + str(location)
             + " -o "
             + str(object)
@@ -189,7 +217,7 @@ def check(feedback, x, y, z, R, P, Y, location, object, goal_publisher):
 
     elif object == "bottle":
         bashCommand = (
-            "rosrun robutler_bringup_23-24 spawn_object.py -l "
+            "rosrun robutler_bringup_23_24 spawn_object.py -l "
             + str(location)
             + " -o "
             + str(object)
@@ -229,7 +257,6 @@ def main():
 
     server = InteractiveMarkerServer("mission")
     print(server)
-
     global h_first_entry, h_mode_last
     h_first_entry = menu_handler.insert("Move to")
 

@@ -26,7 +26,7 @@ def main():
     print(args)
 
     rospack = rospkg.RosPack()
-    package_path = rospack.get_path('robutler_description_23-24') + '/models/'
+    package_path = rospack.get_path('robutler_description_23_24') + '/models/'
 
     # Defines poses where to put objects
     poses = {}

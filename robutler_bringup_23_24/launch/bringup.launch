@@ -9,18 +9,18 @@
     <arg name="use_navigation" default="true"/>
     <arg name="use_yolo" default="false"/>
 
-    <param name="robot_description" command="$(find xacro)/xacro $(find robutler_description_23-24)/urdf/robutler.urdf.xacro" />
+    <param name="robot_description" command="$(find xacro)/xacro $(find robutler_description_23_24)/urdf/robutler.urdf.xacro" />
 
     <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen"/>
 
-    <node pkg="rviz" type="rviz" name="rviz" output="screen" args="-d $(find robutler_bringup_23-24)/config/rviz.rviz"/>
+    <node pkg="rviz" type="rviz" name="rviz" output="screen" args="-d $(find robutler_bringup_23_24)/config/rviz.rviz"/>
 
     <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-urdf -model robutler -x $(arg x_pos) -y $(arg y_pos) -z $(arg z_pos) -Y $(arg Y_pos) -param robot_description" />
 
     <group if="$(arg use_navigation)">
-        <include file="$(find robutler_navigation_23-24)/launch/localization.launch">
+        <include file="$(find robutler_navigation_23_24)/launch/localization.launch">
         </include>
-        <include file="$(find robutler_navigation_23-24)/launch/navigation.launch">
+        <include file="$(find robutler_navigation_23_24)/launch/navigation.launch">
         </include>
     </group>
     
@@ -30,6 +30,6 @@
         </include>
     </group>
     
-    <node pkg="robutler_bringup_23-24" type="mission_manager.py" name="mission_manager" output="screen"/>
+    <node pkg="robutler_bringup_23_24" type="mission_manager.py" name="mission_manager" output="screen"/>
       
 </launch>
