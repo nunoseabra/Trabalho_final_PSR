@@ -153,9 +153,9 @@ def listening_to_objects(msg):
         print("Boxes print: " + box)
         rospy.loginfo("Object found: " + box.Class)
         test_24_01_03_00 += 1
-    obj_flag = rospy.Publisher(
-        "/move_base_simple/obj_flag", , queue_size=1
-    )
+    # obj_flag = rospy.Publisher(
+        # "/move_base_simple/obj_flag", , queue_size=1
+    #  )
 
 
 def find(location, color, object):
