@@ -14,6 +14,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 # Launch gazebo world prior to run this script
 
 from __future__ import print_function
+import rospkg
 import subprocess
 import sys
 import uuid
@@ -67,11 +68,10 @@ if __name__ == "__main__":
     # Initialize
     rospy.init_node("take_photo", anonymous=False)
 
-    find_path_process = subprocess.check_output(
-        "rospack find perception_robutler", shell=True
-    ).strip()
-    folder_path = find_path_process.decode("utf-8") + "/images"
-    
+    rospack = rospkg.RosPack()
+    package_path = rospack.get_path("perception_robutler")
+    folder_path = package_path + "/images"
+
     # save_path
     camera = TakePhoto(
         # save_path="/home/nunomsfs/catkin_ws/src/Trabalho_final_PSR/perception_robutler/images"

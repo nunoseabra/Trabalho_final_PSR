@@ -12,7 +12,7 @@ from geometry_msgs.msg import Pose, Point, Quaternion, PoseStamped
 import uuid
 from tf.transformations import quaternion_from_euler
 from move_base_msgs.msg import MoveBaseActionResult
-from darknet_ros_msgs.msg import ObjectCount
+from darknet_ros_msgs.msg import BoundingBoxes
 import cv2
 import time
 
@@ -146,11 +146,11 @@ def moveTo(feedback, x, y, z, R, P, Y, location, goal_publisher):
 
 def listening_to_objects(msg):
     global found_object_listener
-    rospy.loginfo("Testing ")
-    print("MESSAGE RECEIVED: " + msg)
-    for box in msg.bounding_boxes:
-        print("Boxes print: " + box)
-        rospy.loginfo("Object found: " + box.Class)
+    rospy.loginfo("MESSAGE RECEIVED: ")
+
+    for bbox in msg.bounding_boxes:
+        if bbox.Class == "person" and bbox.probability > 0.5:
+            rospy.loginfo("Found a person")  
 
     found_object_listener.unregister()
     rospy.loginfo("Object Found Subscriber unregistered")
@@ -163,9 +163,8 @@ def find(location, color, object):
     )
     rospy.loginfo("Object Found Subscriber created")
     found_object_listener = rospy.Subscriber(
-        "/darknet_ros/found_object", ObjectCount, listening_to_objects
+        "/darknet_ros/bounding_boxes", BoundingBoxes, listening_to_objects
     )
-
 
 def move_and_find(feedback, x, y, z, R, P, Y, location, color, object, goal_publisher):
     room_locations = {"on_bed", "on_bed_side_table", "on_corner_chair"}
@@ -239,9 +238,7 @@ def main():
     rospy.init_node("mission_manager")
 
     # Create move_base_simple/goal publisher
-    goal_publisher = rospy.Publisher(
-        "/move_base_simple/goal", PoseStamped, queue_size=1
-    )
+    goal_publisher = rospy.Publisher("/move_base_simple/goal", PoseStamped)
 
     server = InteractiveMarkerServer("mission")
     print(server)
