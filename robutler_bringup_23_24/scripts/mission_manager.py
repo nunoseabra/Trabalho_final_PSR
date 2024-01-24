@@ -12,8 +12,7 @@ from geometry_msgs.msg import Pose, Point, Quaternion, PoseStamped
 import uuid
 from tf.transformations import quaternion_from_euler
 from move_base_msgs.msg import MoveBaseActionResult
-from darknet_ros_msgs.msg import BoundingBoxes
-import Obj_found_flag
+from darknet_ros_msgs.msg import ObjectCount
 import cv2
 import time
 
@@ -25,7 +24,7 @@ menu_handler = MenuHandler()
 h_first_entry = 0
 h_mode_last = 0
 
-test_24_01_03_00 = 0
+found_object_listener = None
 
 
 def enableCb(feedback):
@@ -146,37 +145,26 @@ def moveTo(feedback, x, y, z, R, P, Y, location, goal_publisher):
 
 
 def listening_to_objects(msg):
-    global test_24_01_03_00
+    global found_object_listener
     rospy.loginfo("Testing ")
     print("MESSAGE RECEIVED: " + msg)
     for box in msg.bounding_boxes:
         print("Boxes print: " + box)
         rospy.loginfo("Object found: " + box.Class)
-        test_24_01_03_00 += 1
-    # obj_flag = rospy.Publisher(
-        # "/move_base_simple/obj_flag", , queue_size=1
-    #  )
+
+    found_object_listener.unregister()
+    rospy.loginfo("Object Found Subscriber unregistered")
 
 
 def find(location, color, object):
-    global test_24_01_03_00
+    global found_object_listener
     print(
         "Finding " + object + " in the " + location + " turning on color_segmentation!"
     )
     rospy.loginfo("Object Found Subscriber created")
     found_object_listener = rospy.Subscriber(
-        "/darknet_ros/found_object", BoundingBoxes, listening_to_objects
+        "/darknet_ros/found_object", ObjectCount, listening_to_objects
     )
-    bashCommand = "rosrun perception_robutler color_segmentation.py - c " + str(color)
-    find_process = subprocess.Popen(bashCommand.split())
-    while test_24_01_03_00 < 2:
-        rospy.loginfo("still waiting for 4 objects")
-        print(test_24_01_03_00)
-        time.sleep(1)
-        continue
-    found_object_listener.unregister()
-    rospy.loginfo("Object Found Subscriber unregistered")
-    find_process.kill()
 
 
 def move_and_find(feedback, x, y, z, R, P, Y, location, color, object, goal_publisher):

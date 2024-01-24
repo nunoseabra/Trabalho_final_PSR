@@ -1,1 +1,0 @@
-bool obj_flag
