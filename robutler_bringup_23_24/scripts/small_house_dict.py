@@ -4,8 +4,8 @@ import json
 import rospkg
 
 
-def main():
-    bedroom_sections = {
+def robot_dictionary():
+    rob_bedroom_sections = {
         "bedside_table_right": {"Coords": [-4.661233, 0.087952, 1.110907]},  # X, Y, Yaw
         "bed": {"Coords": [-4.276079, -0.220221, 2.279560]},
         "bedside_table_left": {"Coords": [-7.769165, 1.606756, 1.580553]},
@@ -14,12 +14,12 @@ def main():
         "bedroom_entrance": {"Coords": [-2.229286, -0.150375, -3.134459]},
     }
 
-    gym_sections = {
+    rob_gym_sections = {
         "gym_table": {"Coords": [-0.390597, 1.749288, 1.622612]},
         "gym_exercise_area": {"Coords": [1.622612, 2.222902, 0.471165]},
     }
 
-    living_room_sections = {
+    rob_living_room_sections = {
         "sofa": {"Coords": [1.722356, 0.638375, -2.108056]},
         "coffee_table": {"Coords": [0.178091, 0.163724, -0.792975]},
         "cabinet": {"Coords": [-2.039584, -3.304789, -0.685617]},
@@ -27,39 +27,140 @@ def main():
         "wide_view": {"Coords": [5.406128, -1.667074, -2.954676]},
     }
 
-    dining_room_sections = {
+    rob_dining_room_sections = {
         "living_room_view": {"Coords": [4.050766, -0.511902, 0.574028]},
         "top_dining_table": {"Coords": [5.314251, 0.305187, 0.573831]},
         "kitchen_view": {"Coords": [0.573831, -1.138432, 1.523631]},
     }
 
-    kitchen_sections = {
+    rob_kitchen_sections = {
         "living_room_view": {"Coords": [4.416283, -2.000127, -0.160161]},
         "dining_room_view": {"Coords": [6.451540, -1.331393, -1.320177]},
         "stove": {"Coords": [6.931216, -3.201187, -0.090585]},
         "countertop": {"Coords": [7.468817, -3.048542, -1.323980]},
     }
 
-    random_room_sections = {
+    rob_random_room_sections = {
         "entrance": {"Coords": [-2.237149, -1.924746, -2.729596]},
         "center": {"Coords": [-6.020113, -3.479462, -2.729570]},
     }
 
-    small_house = {
-        "bedroom": bedroom_sections,
-        "gym": gym_sections,
-        "living_room": living_room_sections,
-        "dining_room": dining_room_sections,
-        "kitchen": kitchen_sections,
-        "random_room": random_room_sections,
+    robutler_check_loc = {
+        "bedroom": rob_bedroom_sections,
+        "gym": rob_gym_sections,
+        "living_room": rob_living_room_sections,
+        "dining_room": rob_dining_room_sections,
+        "kitchen": rob_kitchen_sections,
+        "random_room": rob_random_room_sections,
     }
+
     rospack = rospkg.RosPack()
     pkg_path = rospack.get_path("robutler_bringup_23_24")
-    fullpath = pkg_path + "/dictionary/small_house.txt"
+    fullpath = pkg_path + "/dictionary/robutler_check_loc.txt"
     with open(fullpath, "w") as convert_file:
-        convert_file.write(
-            json.dumps(small_house, indent=2)
-        )  # added indentation for better readability
+        convert_file.write(json.dumps(robutler_check_loc, indent=2))
+    convert_file.close()
+
+
+def object_dictionary():
+    obj_bedroom_sections = {
+        "bedside_table_right": {
+            "Coords": [-4.353799, 2.865052, 0.784565, 0, 0, 3.079028]
+        },  # X, Y, Z, Roll, Pitch, Yaw
+        "bed": {
+            "Coords": [-6.234550, 1.841569, 0.772517, -0.007876, 0.003780, 3.079027]
+        },
+        "bedside_table_left": {
+            "Coords": [-7.566754, 2.889087, 0.758539, -0.000050, 0.000024, 3.139081]
+        },
+        "bed_table": {"Coords": [-8.251611, 1.906945, 0.513816, 0, 0, 3.129103]},
+        "bed_table_on_top": {
+            "Coords": [-8.996136, 2.048792, 1.187709, 0.000877, -0.003197, 0.003137]
+        },
+        "in_the_open": {
+            "Coords": [-7.466659, -0.044414, 0.066231, 0.000050, -0.000026, 1.031184]
+        },
+    }
+
+    obj_gym_sections = {
+        "gym_table": {
+            "Coords": [-0.559599, 4.246517, 0.480204, -0.042383, 0.008629, 3.133828]
+        },
+        "gym_exercise_area": {
+            "Coords": [4.006518, 4.809416, 0.066231, 0.000018, -0.000046, 3.134037]
+        },
+    }
+
+    obj_living_room_sections = {
+        "sofa": {
+            "Coords": [0.027281, -2.499502, 0.558637, -0.004788, 0.040572, -0.026039]
+        },
+        "coffee_table": {
+            "Coords": [1.231942, -1.698951, 0.431986, 0.000020, -0.000032, 3.127639]
+        },
+        "cabinet": {
+            "Coords": [1.189978, -5.084969, 0.558289, 0.000001, -0.000001, 1.504141]
+        },
+        "shoe_rack": {"Coords": [4.026049, -5.177916, 0.754706, 0, 0, 1.326251]},
+        "in_the_open": {"Coords": [2.631333, -3.786115, 0.066227, 0, 0, 2.034155]},
+    }
+
+    obj_dining_room_sections = {
+        "in_the_open_1": {
+            "Coords": [5.320904, 2.482418, 0.066230, 0.000020, -0.000035, -1.315407]
+        },
+        "top_dining_table": {
+            "Coords": [6.174503, 0.991941, 0.884683, 0.000041, -0.000018, -2.775744]
+        },
+        "in_the_open_2": {
+            "Coords": [8.200308, 1.768009, 0.066232, -0.000053, -0.000025, -2.775744]
+        },
+    }
+
+    obj_kitchen_sections = {
+        "in_the_open_1": {
+            "Coords": [8.210065, -4.171718, 0.066229, 0.000028, -0.000010, -0.636553]
+        },
+        "in_the_open_2": {
+            "Coords": [8.069761, -1.299014, 0.066227, -0.000012, 0.000006, 0.048801]
+        },
+        "stove": {
+            "Coords": [9.071861, -3.576553, 1.067766, 0.000018, -0.000050, 3.137439]
+        },
+        "countertop": {
+            "Coords": [8.971446, -5.071446, 0.975436, -0.000026, 0.000017, 2.511640]
+        },
+    }
+
+    obj_random_room_sections = {
+        "in_the_open": {
+            "Coords": [-5.441856, -4.032910, 0.066226, -0.000003, 0.000000, 1.656644]
+        },
+        "chair": {
+            "Coords": [-8.296339, -4.469997, 0.467944, 0.064908, -0.003812, 0.692503]
+        },
+    }
+
+    object_spawn_loc = {
+        "bedroom": obj_bedroom_sections,
+        "gym": obj_gym_sections,
+        "living_room": obj_living_room_sections,
+        "dining_room": obj_dining_room_sections,
+        "kitchen": obj_kitchen_sections,
+        "random_room": obj_random_room_sections,
+    }
+
+    rospack = rospkg.RosPack()
+    pkg_path = rospack.get_path("robutler_bringup_23_24")
+    fullpath = pkg_path + "/dictionary/object_spawn_loc.txt"
+    with open(fullpath, "w") as convert_file:
+        convert_file.write(json.dumps(object_spawn_loc, indent=2))
+    convert_file.close()
+
+
+def main():
+    robot_dictionary()
+    object_dictionary()
 
 
 if __name__ == "__main__":

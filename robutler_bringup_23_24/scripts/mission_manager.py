@@ -17,6 +17,7 @@ import cv2
 import time
 import pandas as pd
 import json
+import random
 
 server = None
 marker_pos = 1
@@ -25,7 +26,7 @@ menu_handler = MenuHandler()
 
 h_first_entry = 0
 h_mode_last = 0
-
+rospack = rospkg.RosPack()
 found_object_listener = None
 objs_Percent = []
 objs_Class = []
@@ -234,11 +235,11 @@ def check(feedback, x, y, z, R, P, Y, location, object, goal_publisher):
 
 def find_in_house(feedback, object, goal_publisher):
     global found_object_listener, count_obj
-    rospack = rospkg.RosPack()
     pkg_path = rospack.get_path("robutler_bringup_23_24")
-    fullpath = pkg_path + "/dictionary/small_house.txt"
+    fullpath = pkg_path + "/dictionary/robutler_check_loc.txt"
     with open(fullpath, "r") as dictionary_file:
         small_house_dict = json.load(dictionary_file)
+    dictionary_file.close()
     total_objs = 0
     for division_name, division_data in small_house_dict.items():
         rospy.loginfo(f"Going to Division: {division_name}")
@@ -259,12 +260,6 @@ def find_in_house(feedback, object, goal_publisher):
                     goal_publisher=goal_publisher,
                 )
                 rospy.loginfo(f"Going to Section: {section_name}")
-                # try:
-                #     while found_object_listener.get_num_connections() >= 0:
-                #         time.sleep(0.5)
-                #         continue
-                # except:
-                #     rospy.loginfo(f"Completed in this Section")
 
             total_objs += count_obj
     rospy.loginfo(
@@ -272,8 +267,25 @@ def find_in_house(feedback, object, goal_publisher):
     )
 
 
+def spawn_move_to(feedback, division, sp_object):
+    rospy.loginfo(f"Spawning object ({sp_object}) in the {division}")
+    pkg_path = rospack.get_path("robutler_bringup_23_24")
+    fullpath = pkg_path + "/dictionary/object_spawn_loc.txt"
+
+    with open(fullpath, "r") as dictionary_file:
+        small_house_dict = json.load(dictionary_file)
+    dictionary_file.close()
+
+    temp_division = small_house_dict.get(division)
+    num_loc = list(temp_division.keys())
+    random_loc = random.choice(num_loc)
+    random_loc_coords = temp_division.get(random_loc, {}).get("Coords", [])
+
+    rospy.loginfo(f"Object spaned in {division} at {random_loc_coords}")
+
+
 def main():
-    global server
+    global server, h_first_entry, h_mode_last
 
     # -------------------------------
     # Initialization
@@ -285,7 +297,29 @@ def main():
 
     server = InteractiveMarkerServer("mission")
     print(server)
-    global h_first_entry, h_mode_last
+
+    pkg_path = rospack.get_path("robutler_bringup_23_24")
+    fullpath = pkg_path + "/dictionary/robutler_check_loc.txt"
+    with open(fullpath, "r") as dictionary_file:
+        small_house_dict = json.load(dictionary_file)
+    dictionary_file.close()
+    h_find_entry = menu_handler.insert("Find: ")
+    for spawn_obj in [
+        "1",
+        "2",
+    ]:  # TODO: change ["1","2"] to the vector of possible objects that we can spawn
+        h_find_obj_entry = menu_handler.insert(spawn_obj, parent=h_find_entry)
+        for division_name, division_data in small_house_dict.items():
+            h_move_division = menu_handler.insert(
+                division_name,
+                parent=h_find_obj_entry,
+                callback=partial(
+                    spawn_move_to, division=division_name, sp_object=spawn_obj
+                ),
+            )
+
+    # --------------------------------------------------------------------------------------------------------------------
+
     h_first_entry = menu_handler.insert("Move to")
 
     entry = menu_handler.insert(

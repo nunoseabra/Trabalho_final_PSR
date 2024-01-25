@@ -7,7 +7,8 @@
     <arg name="Y_pos" default="1.57"/>
     
     <arg name="use_navigation" default="true"/>
-    <arg name="use_yolo" default="false"/>
+    <arg name="use_yolo" default="true"/>
+    <arg name="update_map_dict" default="false"/>
 
     <param name="robot_description" command="$(find xacro)/xacro $(find robutler_description_23_24)/urdf/robutler.urdf.xacro" />
 
@@ -24,6 +25,7 @@
         </include>
     </group>
     
+    <node pkg="robutler_bringup_23_24" type="mission_manager.py" name="mission_manager" output="screen"/>
     
     <group if="$(arg use_yolo)">
         <include file="$(find darknet_ros)/launch/darknet_ros.launch">
@@ -31,6 +33,9 @@
         </include>
     </group>
     
-    <node pkg="robutler_bringup_23_24" type="mission_manager.py" name="mission_manager" output="screen"/>
+    <group if="$(arg update_map_dict)">
+        <node pkg="robutler_bringup_23_24" name="small_house_dict" type="small_house_dict.py"/>
+    </group>
+    
       
 </launch>
