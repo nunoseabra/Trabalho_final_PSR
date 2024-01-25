@@ -202,18 +202,6 @@ def move_and_find(feedback, x, y, z, R, P, Y, location, color, object, goal_publ
                 + object
                 + "), with a certainty above 50%."
             )
-    # for ind_objs, objs in enumerate(objs_Class):
-    #     if str(objs) == object and objs_Percent[ind_objs] > 0.5:
-    #         rospy.loginfo(
-    #             "Robutler found the object ("
-    #             + object
-    #             + "), with a certainty of "
-    #             + str(round(objs_Percent[ind_objs]*100,2))
-    #             + "%."
-    #         )
-    #         break
-    #     else:
-    #         rospy.loginfo("Robutler didn't find any object ("+object+")")
 
 
 # TODO transfor take_picture to a header and include it here instead of doing bashcommand
@@ -240,6 +228,8 @@ def check(feedback, x, y, z, R, P, Y, location, object, goal_publisher):
         else:
             rospy.loginfo("The table is cleared")
 
+# def find_in_house(feedback, object):
+    
 
 def main():
     global server
