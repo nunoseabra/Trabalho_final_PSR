@@ -16,6 +16,7 @@ from darknet_ros_msgs.msg import BoundingBoxes
 import cv2
 import time
 import pandas as pd
+import json
 
 server = None
 marker_pos = 1
@@ -28,6 +29,7 @@ h_mode_last = 0
 found_object_listener = None
 objs_Percent = []
 objs_Class = []
+count_obj = 0
 
 
 def enableCb(feedback):
@@ -163,16 +165,16 @@ def listening_to_objects(msg):
 
 
 def move_and_find(feedback, x, y, z, R, P, Y, location, color, object, goal_publisher):
-    global found_object_listener, objs_Class, objs_Percent
-    room_locations = {"on_bed", "on_bed_side_table", "on_corner_chair"}
-    gym_locations = {"on_table", "on_exercise_bench", "on_corner"}
+    global found_object_listener, objs_Class, objs_Percent, count_obj
+    # room_locations = {"on_bed", "on_bed_side_table", "on_corner_chair"}
+    # gym_locations = {"on_table", "on_exercise_bench", "on_corner"}
 
-    if location == "bedroom":
-        for loc in room_locations:
-            spawn_object(loc, object)
-    elif location == "gym":
-        for loc in gym_locations:
-            spawn_object(loc, object)
+    # if location == "bedroom":
+    #     for loc in room_locations:
+    #         spawn_object(loc, object)
+    # elif location == "gym":
+    #     for loc in gym_locations:
+    #         spawn_object(loc, object)
 
     moveTo(feedback, x, y, z, R, P, Y, location, goal_publisher)
     print("Finding " + object + " in the " + location)
@@ -191,17 +193,18 @@ def move_and_find(feedback, x, y, z, R, P, Y, location, color, object, goal_publ
         rospy.loginfo(objs_Class)
         rospy.loginfo(objs_Percent)
 
-
     received_data = {"Objects": objs_Class, "Percentage": objs_Percent}
     df = pd.DataFrame(received_data)
 
     count_obj = (df["Objects"][df["Percentage"] > 0.5] == object).sum()
 
     rospy.loginfo(
-                "Robutler found " + str(count_obj) +" ("
-                + object
-                + "), with a certainty above 50%."
-            )
+        "Robutler found "
+        + str(count_obj)
+        + " ("
+        + object
+        + "), with a certainty above 50%."
+    )
 
 
 # TODO transfor take_picture to a header and include it here instead of doing bashcommand
@@ -228,8 +231,46 @@ def check(feedback, x, y, z, R, P, Y, location, object, goal_publisher):
         else:
             rospy.loginfo("The table is cleared")
 
-# def find_in_house(feedback, object):
-    
+
+def find_in_house(feedback, object, goal_publisher):
+    global found_object_listener, count_obj
+    rospack = rospkg.RosPack()
+    pkg_path = rospack.get_path("robutler_bringup_23_24")
+    fullpath = pkg_path + "/dictionary/small_house.txt"
+    with open(fullpath, "r") as dictionary_file:
+        small_house_dict = json.load(dictionary_file)
+    total_objs = 0
+    for division_name, division_data in small_house_dict.items():
+        rospy.loginfo(f"Going to Division: {division_name}")
+        for section_name, section_data in division_data.items():
+            coords = section_data.get("Coords")
+            if coords:
+                move_and_find(
+                    feedback=feedback,
+                    x=coords[0],
+                    y=coords[1],
+                    z=0,
+                    R=0,
+                    P=0,
+                    Y=coords[2],
+                    location=str(division_name),
+                    color=None,
+                    object=object,
+                    goal_publisher=goal_publisher,
+                )
+                rospy.loginfo(f"Going to Section: {section_name}")
+                # try:
+                #     while found_object_listener.get_num_connections() >= 0:
+                #         time.sleep(0.5)
+                #         continue
+                # except:
+                #     rospy.loginfo(f"Completed in this Section")
+
+            total_objs += count_obj
+    rospy.loginfo(
+        "Robutler found " + str(total_objs) + " " + str(object) + " in the house"
+    )
+
 
 def main():
     global server
@@ -539,6 +580,11 @@ def main():
             object="diningtable",
             goal_publisher=goal_publisher,
         ),
+    )
+    entry = menu_handler.insert(
+        "Is someone home",
+        parent=h_fourth_entry,
+        callback=partial(find_in_house, object="person", goal_publisher=goal_publisher),
     )
 
     makeMenuMarker("marker1")

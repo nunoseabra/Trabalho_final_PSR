@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import json
+import rospkg
 
 
 def main():
@@ -52,8 +53,10 @@ def main():
         "kitchen": kitchen_sections,
         "random_room": random_room_sections,
     }
-
-    with open("small_house.txt", "w") as convert_file:
+    rospack = rospkg.RosPack()
+    pkg_path = rospack.get_path("robutler_bringup_23_24")
+    fullpath = pkg_path + "/dictionary/small_house.txt"
+    with open(fullpath, "w") as convert_file:
         convert_file.write(
             json.dumps(small_house, indent=2)
         )  # added indentation for better readability
