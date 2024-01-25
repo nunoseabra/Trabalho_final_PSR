@@ -15,6 +15,7 @@ from move_base_msgs.msg import MoveBaseActionResult
 from darknet_ros_msgs.msg import BoundingBoxes
 import cv2
 import time
+import pandas as pd
 
 server = None
 marker_pos = 1
@@ -180,6 +181,7 @@ def move_and_find(feedback, x, y, z, R, P, Y, location, color, object, goal_publ
     found_object_listener = rospy.Subscriber(
         "/darknet_ros/bounding_boxes", BoundingBoxes, listening_to_objects
     )
+    time.sleep(2)
     try:
         while found_object_listener.get_num_connections() >= 0:
             time.sleep(0.5)
@@ -187,6 +189,31 @@ def move_and_find(feedback, x, y, z, R, P, Y, location, color, object, goal_publ
     except:
         rospy.loginfo("Robutler has found: ")
         rospy.loginfo(objs_Class)
+        rospy.loginfo(objs_Percent)
+
+
+    received_data = {"Objects": objs_Class, "Percentage": objs_Percent}
+    df = pd.DataFrame(received_data)
+
+    count_obj = (df["Objects"][df["Percentage"] > 0.5] == object).sum()
+
+    rospy.loginfo(
+                "Robutler found " + str(count_obj) +" ("
+                + object
+                + "), with a certainty above 50%."
+            )
+    # for ind_objs, objs in enumerate(objs_Class):
+    #     if str(objs) == object and objs_Percent[ind_objs] > 0.5:
+    #         rospy.loginfo(
+    #             "Robutler found the object ("
+    #             + object
+    #             + "), with a certainty of "
+    #             + str(round(objs_Percent[ind_objs]*100,2))
+    #             + "%."
+    #         )
+    #         break
+    #     else:
+    #         rospy.loginfo("Robutler didn't find any object ("+object+")")
 
 
 # TODO transfor take_picture to a header and include it here instead of doing bashcommand
@@ -202,7 +229,7 @@ def check(feedback, x, y, z, R, P, Y, location, object, goal_publisher):
     move_and_find(feedback, x, y, z, R, P, Y, location, None, object, goal_publisher)
     for index_objs, obj_Class in enumerate(objs_Class):
         rospy.loginfo(str(obj_Class))
-        #TODO: ADD to check if inside the area of bounding_boxes there is another obj
+        # TODO: ADD to check if inside the area of bounding_boxes there is another obj
         if str(obj_Class) != "diningtable" or str(obj_Class) != "chair":
             rospy.loginfo(
                 "The table is not cleared, with a probability of "
