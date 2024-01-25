@@ -174,9 +174,7 @@ def move_and_find(feedback, x, y, z, R, P, Y, location, color, object, goal_publ
             spawn_object(loc, object)
 
     moveTo(feedback, x, y, z, R, P, Y, location, goal_publisher)
-    print(
-        "Finding " + object + " in the " + location
-    )
+    print("Finding " + object + " in the " + location)
 
     rospy.loginfo("Bounding Boxes subscriber created")
     found_object_listener = rospy.Subscriber(
@@ -199,41 +197,21 @@ def take_picture(feedback):
 
 
 def check(feedback, x, y, z, R, P, Y, location, object, goal_publisher):
-    if object == "pc":
-        bashCommand = (
-            "rosrun robutler_bringup_23_24 spawn_object.py -l "
-            + str(location)
-            + " -o "
-            + str(object)
-        )
-        check_process = subprocess.Popen(bashCommand.split())
-        output, error = check_process.communicate()
-
-    elif object == "bottle":
-        bashCommand = (
-            "rosrun robutler_bringup_23_24 spawn_object.py -l "
-            + str(location)
-            + " -o "
-            + str(object)
-        )
-        check_process = subprocess.Popen(bashCommand.split())
-        output, error = check_process.communicate()
-
-    moveTo(feedback, x, y, z, R, P, Y, location, goal_publisher)
-    bashCommand = "roslaunch darknet_ros darknet_ros.launch"
-    check_process = subprocess.Popen(bashCommand.split())
-
-    while True:
-        key = cv2.waitKey(1)
-
-        if key == ord("w"):
-            check_process.kill()
-        break
-    print("Object found!")
-    # if sucess:
-    #   bashCommand = "roslaunch darknet_ros darknet_ros.launch"
-    #   find_process = subprocess.Popen(bashCommand.split())
-    #   check_process.kill()
+    global objs_Class, objs_Percent
+    spawn_object(location, object)
+    move_and_find(feedback, x, y, z, R, P, Y, location, None, object, goal_publisher)
+    for index_objs, obj_Class in enumerate(objs_Class):
+        rospy.loginfo(str(obj_Class))
+        #TODO: ADD to check if inside the area of bounding_boxes there is another obj
+        if str(obj_Class) != "diningtable" or str(obj_Class) != "chair":
+            rospy.loginfo(
+                "The table is not cleared, with a probability of "
+                + str(objs_Percent[index_objs])
+                + "%"
+            )
+            break
+        else:
+            rospy.loginfo("The table is cleared")
 
 
 def main():
@@ -276,8 +254,8 @@ def main():
             x=-4.409525,
             y=-0.182006,
             z=0,
-            R=-0.000007,
-            P=0.003198,
+            R=0,
+            P=0,
             Y=1.980398,
             location="bedroom",
             goal_publisher=goal_publisher,
@@ -309,7 +287,7 @@ def main():
             y=2.1515,
             z=0,
             R=0,
-            P=0.003175,
+            P=0,
             Y=0.706,
             location="gym",
             goal_publisher=goal_publisher,
@@ -329,8 +307,8 @@ def main():
             x=-4.409525,
             y=-0.182006,
             z=0,
-            R=-0.000007,
-            P=0.003198,
+            R=0,
+            P=0,
             Y=1.980398,
             location="bedroom",
             color="violet",
@@ -348,7 +326,7 @@ def main():
             y=2.1515,
             z=0,
             R=0,
-            P=0.003175,
+            P=0,
             Y=0.706,
             location="gym",
             color="violet",
@@ -367,8 +345,8 @@ def main():
             x=-4.409525,
             y=-0.182006,
             z=0,
-            R=-0.000007,
-            P=0.003198,
+            R=0,
+            P=0,
             Y=1.980398,
             location="bedroom",
             color="red",
@@ -386,7 +364,7 @@ def main():
             y=2.1515,
             z=0,
             R=0,
-            P=0.003175,
+            P=0,
             Y=0.706,
             location="gym",
             color="red",
@@ -405,8 +383,8 @@ def main():
             x=-4.409525,
             y=-0.182006,
             z=0,
-            R=-0.000007,
-            P=0.003198,
+            R=0,
+            P=0,
             Y=1.980398,
             location="bedroom",
             color="blue",
@@ -424,7 +402,7 @@ def main():
             y=2.1515,
             z=0,
             R=0,
-            P=0.003175,
+            P=0,
             Y=0.706,
             location="gym",
             color="blue",
@@ -443,8 +421,8 @@ def main():
             x=-4.409525,
             y=-0.182006,
             z=0,
-            R=-0.000007,
-            P=0.003198,
+            R=0,
+            P=0,
             Y=1.980398,
             location="bedroom",
             color="violet",
@@ -462,7 +440,7 @@ def main():
             y=2.1515,
             z=0,
             R=0,
-            P=0.003175,
+            P=0,
             Y=0.706,
             location="gym",
             color="violet",
@@ -479,14 +457,15 @@ def main():
         "Pc is on the table",
         parent=h_fourth_entry,
         callback=partial(
-            check,
+            move_and_find,
             x=-7.622083,
             y=0.526304,
-            z=-0.001006,
-            R=-0.000007,
-            P=0.003169,
+            z=0,
+            R=0,
+            P=0,
             Y=2.379986,
             location="table_bedroom",
+            color="black",
             object="pc",
             goal_publisher=goal_publisher,
         ),
@@ -496,14 +475,15 @@ def main():
         "Can of coke is on the table",
         parent=h_fourth_entry,
         callback=partial(
-            check,
+            move_and_find,
             x=-7.622083,
             y=0.526304,
-            z=-0.001006,
-            R=-0.000007,
-            P=0.003169,
+            z=0,
+            R=0,
+            P=0,
             Y=2.379986,
             location="table_bedroom",
+            color="red",
             object="can_coke",
             goal_publisher=goal_publisher,
         ),
@@ -513,15 +493,33 @@ def main():
         "Bootle of wine is on the table",
         parent=h_fourth_entry,
         callback=partial(
-            check,
+            move_and_find,
             x=-7.622083,
             y=0.526304,
-            z=-0.001006,
-            R=-0.000007,
-            P=0.003169,
+            z=0,
+            R=0,
+            P=0,
             Y=2.379986,
             location="table_bedroom",
+            color="darkgreen",
             object="bottle",
+            goal_publisher=goal_publisher,
+        ),
+    )
+
+    entry = menu_handler.insert(
+        "Diner table is cleared",
+        parent=h_fourth_entry,
+        callback=partial(
+            check,
+            x=5.065660,
+            y=0.698208,
+            z=0,
+            R=0,
+            P=0,
+            Y=0.148759,
+            location="diningtable",
+            object="diningtable",
             goal_publisher=goal_publisher,
         ),
     )
