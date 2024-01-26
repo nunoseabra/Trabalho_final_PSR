@@ -1,148 +1,122 @@
 #!/usr/bin/env python3
 
-import random
-
 import rospy
 import rospkg
-from gazebo_msgs.srv import SpawnModel
+from gazebo_msgs.srv import SpawnModel, DeleteModel
 from geometry_msgs.msg import Pose, Point, Quaternion
 from tf.transformations import quaternion_from_euler
 import uuid
-import argparse
+import json
+import random
+import os
+import time
 
 
-def main():
+class ObjectSpawner:
+    def __init__(self):
+        # rospy.init_node("object_spawner", log_level=rospy.INFO)
+        self.service_name = "gazebo/spawn_sdf_model"
+        rospy.wait_for_service(self.service_name)
+        self.service_client = rospy.ServiceProxy(self.service_name, SpawnModel)
+        self.package_path = (
+            rospkg.RosPack().get_path("robutler_description_23_24") + "/models/"
+        )
+        self.objects = self.load_objects()
+        self.divisions = self.define_divisions()
+        self.object_ns = None
 
-    # -------------------------------
-    # Initialization
-    # -------------------------------
-    parser = argparse.ArgumentParser(description='Spawn de objetos em determinadas localizacões')
-    parser.add_argument('-l', '--location', type=str, help='', required=False,
-                        default='on_bed_side_table')
-    parser.add_argument('-o', '--object', type=str, help='', required=False,
-                        default='sphere_v')
+    def load_objects(self):
+        objects = {}
+        for dirname in os.listdir(self.package_path):
+            dir_path = os.path.join(self.package_path, dirname)
+            if os.path.isdir(dir_path):
+                sdf_filename = None
+                for filename in os.listdir(dir_path):
+                    if filename.endswith(".sdf"):
+                        sdf_filename = filename
+                        rospy.loginfo(f"Found {dirname}")
+                        file_path = os.path.join(dir_path, sdf_filename)
+                        with open(file_path, "r") as f:
+                            sdf_content = f.read()
+                        break
+                if sdf_filename:
+                    objects[dirname] = {
+                        "name": dirname,
+                        "sdf": sdf_content,
+                    }
+        return objects
 
-    args = vars(parser.parse_args())  # creates a dictionary
-    print(args)
+    def define_divisions(self):
+        divisions = {}
+        pkg_path = rospkg.RosPack().get_path("robutler_bringup_23_24")
+        fullpath = pkg_path + "/dictionary/object_spawn_loc.txt"
+        with open(fullpath, "r") as dictionary_file:
+            small_house_dict = json.load(dictionary_file)
+        for division_name, division_data in small_house_dict.items():
+            divisions[division_name] = division_data
+        return divisions
 
-    rospack = rospkg.RosPack()
-    package_path = rospack.get_path('robutler_description_23_24') + '/models/'
+    def spawn_object(self, division, object_name):
+        if division not in self.divisions:
+            rospy.logerr(
+                f"Division '{division}' is unknown. Available locations are {list(self.divisions.keys())}"
+            )
+            return
 
-    # Defines poses where to put objects
-    poses = {}
+        if object_name not in self.objects:
+            rospy.logerr(
+                f"Object '{object_name}' is unknown. Available objects are {list(self.objects.keys())}"
+            )
+            return
 
-    # on bed pose
-    p = Pose()
-    p.position = Point(x=-6.033466, y=1.971232, z=0.644345)
-    q = quaternion_from_euler(0, 0, 0)  # From euler angles (rpy) to quaternion
-    p.orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
-    poses['on_bed'] = {'pose': p}
+        temp_sections = self.divisions[division]
 
-    # on bed-side-table pose
-    p = Pose()
-    p.position = Point(x=-4.489786, y=2.867268, z=0.679033)
-    q = quaternion_from_euler(0, 0, 0)  # From euler angles (rpy) to quaternion
-    p.orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
-    poses['on_bed_side_table'] = {'pose': p}
+        rospy.loginfo(temp_sections)
 
-    # on bed-side-table pose
-    p = Pose()
-    p.position = Point(x=-8.213487, y=-4.440661, z=0.351335)
-    q = quaternion_from_euler(0, 0, 0)  # From euler angles (rpy) to quaternion
-    p.orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
-    poses['on_corner_chair'] = {'pose': p}
+        num_sec = list(temp_sections.keys())
+        random_sec = random.choice(num_sec)
+        random_sec_coords = temp_sections.get(random_sec, {}).get("Coords", [])
+        (x, y, z, roll, pitch, yaw) = random_sec_coords
 
-    p = Pose()
-    p.position = Point(x=4.275414, y=4.966099, z=0)
-    q = quaternion_from_euler(0, 0, 0)  # From euler angles (rpy) to quaternion
-    p.orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
-    poses['on_corner'] = {'pose': p}
+        rospy.loginfo(random_sec_coords)
 
-    p = Pose()
-    p.position = Point(x=3.098027, y=3.135295, z=0.38)
-    q = quaternion_from_euler(0, 0, 0)  # From euler angles (rpy) to quaternion
-    p.orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
-    poses['on_exercise_bench'] = {'pose': p}    
-
-    p = Pose()
-    p.position = Point(x=-0.51, y=4.061939, z=0.399)
-    q = quaternion_from_euler(0, 0, 0)  # From euler angles (rpy) to quaternion
-    p.orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
-    poses['on_table'] = {'pose': p}  
-
-    p = Pose()
-    p.position = Point(x=-9.039542, y=1.732741, z=0.750497)
-    q = quaternion_from_euler(0, 0, 0.75)  # From euler angles (rpy) to quaternion
-    p.orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
-    poses['table_bedroom'] = {'pose': p} 
-
-    # define objects
-    objects = {}
-
-    # add object sphere_v
-    f = open(package_path + 'sphere_v/model.sdf', 'r')
-    objects['violet_ball'] = {'name': 'sphere_v', 'sdf': f.read()}
-
-    # add object sphere_r
-    f = open(package_path + 'sphere_r/model.sdf', 'r')
-    objects['red_ball'] = {'name': 'sphere_r', 'sdf': f.read()}
-
-    # add object sphere_b
-    f = open(package_path + 'sphere_b/model.sdf', 'r')
-    objects['blue_ball'] = {'name': 'sphere_b', 'sdf': f.read()}
-
-    # add object person_standing
-    f = open(package_path + 'person_standing/model.sdf', 'r')
-    objects['person'] = {'name': 'person_standing', 'sdf': f.read()}
-
-    # add object coca cola can
-    f = open(package_path + 'coca_cola/model.sdf', 'r')
-    objects['can_coke'] = {'name': 'coca_cola', 'sdf': f.read()}
-
-     # add object laptop
-    f = open(package_path + 'laptop_pc_1/model.sdf', 'r')
-    objects['pc'] = {'name': 'laptop_pc_1', 'sdf': f.read()}
-
-     # add object bottle red wine
-    f = open(package_path + 'bottle_red_wine/model.sdf', 'r')
-    objects['bottle'] = {'name': 'bottle_red_wine', 'sdf': f.read()}
-    
-
-    # Check if given object and location are valid
-
-    if not args['location'] in poses.keys():
-        print('Location ' + args['location'] +
-              ' is unknown. Available locations are ' + str(list(poses.keys())))
-
-    elif not args['object'] in objects.keys():
-        print('Object ' + args['object'] +
-              ' is unknown. Available objects are ' + str(list(objects.keys())))
-
-    # -------------------------------
-    # ROS
-    # -------------------------------
-    
-    else:
-        rospy.init_node('insert_object', log_level=rospy.INFO)
-
-        service_name = 'gazebo/spawn_sdf_model'
-        print('waiting for service ' + service_name + ' ... ', end='')
-        rospy.wait_for_service(service_name)
-        print('Found')
-
-        service_client = rospy.ServiceProxy(service_name, SpawnModel)
-
-        location = args['location']
-        object_name = args['object']
-
+        pose = Pose()
+        pose.position = Point(x, y, z)
+        q = quaternion_from_euler(roll, pitch, yaw)
+        pose.orientation = Quaternion(*q)
+        rospy.loginfo(pose)
         uuid_str = str(uuid.uuid4())
-        service_client(objects[object_name]['name'] + '_' + uuid_str,
-                    objects[object_name]['sdf'],
-                    objects[object_name]['name'] + '_' + uuid_str,
-                    poses[location]['pose'],
-                    'world')
-        print('Done')
+
+        self.object_ns = self.objects[object_name]["name"] + "_" + uuid_str
+        try:
+            self.service_client(
+                model_name=self.objects[object_name]["name"] + "_" + uuid_str,
+                model_xml=self.objects[object_name]["sdf"],
+                robot_namespace=self.objects[object_name]["name"] + "_" + uuid_str,
+                initial_pose=pose,
+                reference_frame="world",
+            )
+            rospy.loginfo(f"Spawned object '{object_name}' at location '{division}'")
+        except rospy.ServiceException as e:
+            rospy.logerr(f"Service call failed: {e}")
+
+    def delete_object(self):
+        try:
+            delete_service_name = "/gazebo/delete_model"
+            rospy.wait_for_service(delete_service_name)
+            delete_service = rospy.ServiceProxy(delete_service_name, DeleteModel)
+            delete_service(self.object_ns)
+            rospy.loginfo(f"Deleted object '{self.object_ns}'")
+        except rospy.ServiceException as e:
+            rospy.logerr(f"Service call failed: {e}")
 
 
-if __name__ == '__main__':
-    main()
+def spawn_object_at_location(location):
+    spawner = ObjectSpawner()
+    spawner.spawn_object(location, "person_standing")
+    time.sleep(4)
+    spawner.delete_object()
+
+
+if __name__ == "__main__":
+    spawn_object_at_location("bedroom")

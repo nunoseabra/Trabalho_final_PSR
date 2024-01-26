@@ -30,7 +30,7 @@ def robot_dictionary():
     rob_dining_room_sections = {
         "living_room_view": {"Coords": [4.050766, -0.511902, 0.574028]},
         "top_dining_table": {"Coords": [5.314251, 0.305187, 0.573831]},
-        "kitchen_view": {"Coords": [0.573831, -1.138432, 1.523631]},
+        "kitchen_view": {"Coords": [6.573831, -1.138432, 1.523631]},
     }
 
     rob_kitchen_sections = {

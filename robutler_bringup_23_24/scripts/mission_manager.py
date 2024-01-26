@@ -7,7 +7,6 @@ from interactive_markers.interactive_marker_server import *
 from interactive_markers.menu_handler import *
 from visualization_msgs.msg import *
 import rospkg
-from gazebo_msgs.srv import SpawnModel
 from geometry_msgs.msg import Pose, Point, Quaternion, PoseStamped
 import uuid
 from tf.transformations import quaternion_from_euler
@@ -17,13 +16,16 @@ import cv2
 import time
 import pandas as pd
 import json
+from spawn_object import ObjectSpawner
+import os
 import random
+
 
 server = None
 marker_pos = 1
 
 menu_handler = MenuHandler()
-
+robutler_loc_dict = {}
 h_first_entry = 0
 h_mode_last = 0
 rospack = rospkg.RosPack()
@@ -31,6 +33,7 @@ found_object_listener = None
 objs_Percent = []
 objs_Class = []
 count_obj = 0
+active_objects = []
 
 
 def enableCb(feedback):
@@ -115,25 +118,24 @@ def deepCb(feedback):
     rospy.loginfo("The deep sub-menu has been found.")
 
 
-# TODO Change spawn_object bashcommand to be a node that creates and remove the object (since I don't think we have a way to remove)
-def spawn_object(loc, object):
-    # could be simplified by including spawn_object.py
-    # -> making it a class -> using a dictionary -> small_house{name,division{name,sections{name,area(placement)}}}
-    bashCommand = (
-        "rosrun robutler_bringup_23_24 spawn_object.py -l "
-        + str(loc)
-        + " -o "
-        + str(object)
-    )
-    spawn_process = subprocess.Popen(bashCommand.split())
-    output, error = spawn_process.communicate()
-
-
-def moveTo(feedback, x, y, z, R, P, Y, location, goal_publisher):
+def moveTo(feedback, location, goal_publisher):
+    global robutler_loc_dict
     print("Called moving to " + location)
+
+    for division_name, division_data in robutler_loc_dict.items():
+        rospy.loginfo(f"Going to Division: {division_name}")
+        for section_name, section_data in division_data.items():
+            if section_name == location:
+                coordinates = section_data.get("Coords")
+                if coordinates:
+                    rospy.loginfo(f"Coordinates for section {location}: {coordinates}")
+                else:
+                    rospy.loginfo(f"No coordinates found for section {location}")
+    (x, y, Y) = coordinates
+
     p = Pose()
-    p.position = Point(x=x, y=y, z=z)
-    q = quaternion_from_euler(R, P, Y)  # From euler angles (rpy) to quaternion
+    p.position = Point(x=x, y=y, z=0)
+    q = quaternion_from_euler(0, 0, Y)  # From euler angles (rpy) to quaternion
     p.orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
 
     ps = PoseStamped()
@@ -165,19 +167,10 @@ def listening_to_objects(msg):
     # found_object_listener = False
 
 
-def move_and_find(feedback, x, y, z, R, P, Y, location, color, object, goal_publisher):
+def move_and_find(feedback, location, object, goal_publisher):
     global found_object_listener, objs_Class, objs_Percent, count_obj
-    # room_locations = {"on_bed", "on_bed_side_table", "on_corner_chair"}
-    # gym_locations = {"on_table", "on_exercise_bench", "on_corner"}
 
-    # if location == "bedroom":
-    #     for loc in room_locations:
-    #         spawn_object(loc, object)
-    # elif location == "gym":
-    #     for loc in gym_locations:
-    #         spawn_object(loc, object)
-
-    moveTo(feedback, x, y, z, R, P, Y, location, goal_publisher)
+    moveTo(feedback, location, goal_publisher)
     print("Finding " + object + " in the " + location)
 
     rospy.loginfo("Bounding Boxes subscriber created")
@@ -196,7 +189,7 @@ def move_and_find(feedback, x, y, z, R, P, Y, location, color, object, goal_publ
 
     received_data = {"Objects": objs_Class, "Percentage": objs_Percent}
     df = pd.DataFrame(received_data)
-
+    # TODO: this needs to be fixed so that Objects from yolo and Objects from models/ have the same name
     count_obj = (df["Objects"][df["Percentage"] > 0.5] == object).sum()
 
     rospy.loginfo(
@@ -217,7 +210,7 @@ def take_picture(feedback):
 
 def check(feedback, x, y, z, R, P, Y, location, object, goal_publisher):
     global objs_Class, objs_Percent
-    spawn_object(location, object)
+    # spawn_object(location, object)
     move_and_find(feedback, x, y, z, R, P, Y, location, None, object, goal_publisher)
     for index_objs, obj_Class in enumerate(objs_Class):
         rospy.loginfo(str(obj_Class))
@@ -234,32 +227,20 @@ def check(feedback, x, y, z, R, P, Y, location, object, goal_publisher):
 
 
 def find_in_house(feedback, object, goal_publisher):
-    global found_object_listener, count_obj
-    pkg_path = rospack.get_path("robutler_bringup_23_24")
-    fullpath = pkg_path + "/dictionary/robutler_check_loc.txt"
-    with open(fullpath, "r") as dictionary_file:
-        small_house_dict = json.load(dictionary_file)
-    dictionary_file.close()
+    global found_object_listener, count_obj, robutler_loc_dict
     total_objs = 0
-    for division_name, division_data in small_house_dict.items():
+    for division_name, division_data in robutler_loc_dict.items():
         rospy.loginfo(f"Going to Division: {division_name}")
         for section_name, section_data in division_data.items():
             coords = section_data.get("Coords")
+            rospy.loginfo(f"Going to Section: {section_name}")
             if coords:
                 move_and_find(
                     feedback=feedback,
-                    x=coords[0],
-                    y=coords[1],
-                    z=0,
-                    R=0,
-                    P=0,
-                    Y=coords[2],
                     location=str(division_name),
-                    color=None,
                     object=object,
                     goal_publisher=goal_publisher,
                 )
-                rospy.loginfo(f"Going to Section: {section_name}")
 
             total_objs += count_obj
     rospy.loginfo(
@@ -267,25 +248,31 @@ def find_in_house(feedback, object, goal_publisher):
     )
 
 
-def spawn_move_to(feedback, division, sp_object):
+def spawn_move_to(feedback, division, sp_object, goal_publisher):
+    global active_objects, robutler_loc_dict, count_obj
     rospy.loginfo(f"Spawning object ({sp_object}) in the {division}")
-    pkg_path = rospack.get_path("robutler_bringup_23_24")
-    fullpath = pkg_path + "/dictionary/object_spawn_loc.txt"
+    obj_1 = ObjectSpawner()
+    obj_1.spawn_object(division=division, object_name=sp_object)
+    active_objects.append(obj_1)
+    if random.getrandbits(1):
+        obj_1.delete_object()
+        active_objects.remove(obj_1)
+    rospy.loginfo(f"Object ({sp_object}) spawned in {division}")
 
-    with open(fullpath, "r") as dictionary_file:
-        small_house_dict = json.load(dictionary_file)
-    dictionary_file.close()
-
-    temp_division = small_house_dict.get(division)
-    num_loc = list(temp_division.keys())
-    random_loc = random.choice(num_loc)
-    random_loc_coords = temp_division.get(random_loc, {}).get("Coords", [])
-
-    rospy.loginfo(f"Object spaned in {division} at {random_loc_coords}")
+    for section_name, section_data in robutler_loc_dict[division].items():
+        move_and_find(
+            feedback=feedback,
+            location=section_name,
+            object=sp_object,
+            goal_publisher=goal_publisher,
+        )
+        if count_obj >= 1:
+            rospy.loginfo(f"Robutler found {sp_object} in {division} {section_name}")
+            break
 
 
 def main():
-    global server, h_first_entry, h_mode_last
+    global server, h_first_entry, h_mode_last, robutler_loc_dict
 
     # -------------------------------
     # Initialization
@@ -301,245 +288,329 @@ def main():
     pkg_path = rospack.get_path("robutler_bringup_23_24")
     fullpath = pkg_path + "/dictionary/robutler_check_loc.txt"
     with open(fullpath, "r") as dictionary_file:
-        small_house_dict = json.load(dictionary_file)
-    dictionary_file.close()
-    h_find_entry = menu_handler.insert("Find: ")
-    for spawn_obj in [
-        "1",
-        "2",
-    ]:  # TODO: change ["1","2"] to the vector of possible objects that we can spawn
+        robutler_loc_dict = json.load(dictionary_file)
+
+    obj_path = rospkg.RosPack().get_path("robutler_description_23_24") + "/models/"
+    obj_names = []
+    for item in os.listdir(obj_path):
+        if os.path.isdir(os.path.join(obj_path, item)):
+            obj_names.append(item)
+
+    h_find_entry = menu_handler.insert("Find")
+
+    for spawn_obj in obj_names:
         h_find_obj_entry = menu_handler.insert(spawn_obj, parent=h_find_entry)
-        for division_name, division_data in small_house_dict.items():
-            h_move_division = menu_handler.insert(
+        for division_name, division_data in robutler_loc_dict.items():
+            menu_handler.insert(
                 division_name,
                 parent=h_find_obj_entry,
                 callback=partial(
-                    spawn_move_to, division=division_name, sp_object=spawn_obj
+                    spawn_move_to,
+                    division=division_name,
+                    sp_object=spawn_obj,
+                    goal_publisher=goal_publisher,
                 ),
             )
 
+    h_move_entry = menu_handler.insert("Move to")
+
+    for division_name, division_data in robutler_loc_dict.items():
+        h_move_division = menu_handler.insert(division_name, parent=h_move_entry)
+        for section_name, section_data in division_data.items():
+            menu_handler.insert(
+                section_name,
+                parent=h_move_division,
+                callback=partial(
+                    moveTo, location=section_name, goal_publisher=goal_publisher
+                ),
+            )
     # --------------------------------------------------------------------------------------------------------------------
 
-    h_first_entry = menu_handler.insert("Move to")
+    # h_first_entry = menu_handler.insert("Move to")
 
-    entry = menu_handler.insert(
-        "kitchen",
-        parent=h_first_entry,
-        callback=partial(
-            moveTo,
-            x=6.568593,
-            y=-1.788789,
-            z=0,
-            R=0,
-            P=0,
-            Y=-1.504141,
-            location="kitchen",
-            goal_publisher=goal_publisher,
-        ),
-    )
+    # entry = menu_handler.insert(
+    #     "kitchen",
+    #     parent=h_first_entry,
+    #     callback=partial(
+    #         moveTo,
+    #         x=6.568593,
+    #         y=-1.788789,
+    #         z=0,
+    #         R=0,
+    #         P=0,
+    #         Y=-1.504141,
+    #         location="kitchen",
+    #         goal_publisher=goal_publisher,
+    #     ),
+    # )
 
-    entry = menu_handler.insert(
-        "bedroom",
-        parent=h_first_entry,
-        callback=partial(
-            moveTo,
-            x=-4.409525,
-            y=-0.182006,
-            z=0,
-            R=0,
-            P=0,
-            Y=1.980398,
-            location="bedroom",
-            goal_publisher=goal_publisher,
-        ),
-    )
+    # entry = menu_handler.insert(
+    #     "bedroom",
+    #     parent=h_first_entry,
+    #     callback=partial(
+    #         moveTo,
+    #         x=-4.409525,
+    #         y=-0.182006,
+    #         z=0,
+    #         R=0,
+    #         P=0,
+    #         Y=1.980398,
+    #         location="bedroom",
+    #         goal_publisher=goal_publisher,
+    #     ),
+    # )
 
-    entry = menu_handler.insert(
-        "livingroom",
-        parent=h_first_entry,
-        callback=partial(
-            moveTo,
-            x=0.987,
-            y=0.039,
-            z=0,
-            R=0,
-            P=0,
-            Y=0,
-            location="livingroom",
-            goal_publisher=goal_publisher,
-        ),
-    )
+    # entry = menu_handler.insert(
+    #     "livingroom",
+    #     parent=h_first_entry,
+    #     callback=partial(
+    #         moveTo,
+    #         x=0.987,
+    #         y=0.039,
+    #         z=0,
+    #         R=0,
+    #         P=0,
+    #         Y=0,
+    #         location="livingroom",
+    #         goal_publisher=goal_publisher,
+    #     ),
+    # )
 
-    entry = menu_handler.insert(
-        "gym",
-        parent=h_first_entry,
-        callback=partial(
-            moveTo,
-            x=1.344,
-            y=2.1515,
-            z=0,
-            R=0,
-            P=0,
-            Y=0.706,
-            location="gym",
-            goal_publisher=goal_publisher,
-        ),
-    )
+    # entry = menu_handler.insert(
+    #     "gym",
+    #     parent=h_first_entry,
+    #     callback=partial(
+    #         moveTo,
+    #         x=1.344,
+    #         y=2.1515,
+    #         z=0,
+    #         R=0,
+    #         P=0,
+    #         Y=0.706,
+    #         location="gym",
+    #         goal_publisher=goal_publisher,
+    #     ),
+    # )
     # entry = menu_handler.insert("living room", parent=h_first_entry, callback=moveToLivingRoom)
 
-    h_second_entry = menu_handler.insert("Find")
+    # h_second_entry = menu_handler.insert("Find")
 
-    sub_handler1 = menu_handler.insert("Violet ball", parent=h_second_entry)
+    # sub_handler1 = menu_handler.insert("Violet ball", parent=h_second_entry)
 
-    entry = menu_handler.insert(
-        "In the bedroom",
-        parent=sub_handler1,
-        callback=partial(
-            move_and_find,
-            x=-4.409525,
-            y=-0.182006,
-            z=0,
-            R=0,
-            P=0,
-            Y=1.980398,
-            location="bedroom",
-            color="violet",
-            object="violet_ball",
-            goal_publisher=goal_publisher,
-        ),
-    )
+    # entry = menu_handler.insert(
+    #     "In the bedroom",
+    #     parent=sub_handler1,
+    #     callback=partial(
+    #         move_and_find,
+    #         x=-4.409525,
+    #         y=-0.182006,
+    #         z=0,
+    #         R=0,
+    #         P=0,
+    #         Y=1.980398,
+    #         location="bedroom",
+    #         color="violet",
+    #         object="violet_ball",
+    #         goal_publisher=goal_publisher,
+    #     ),
+    # )
 
-    entry = menu_handler.insert(
-        "In the gym",
-        parent=sub_handler1,
-        callback=partial(
-            move_and_find,
-            x=1.344,
-            y=2.1515,
-            z=0,
-            R=0,
-            P=0,
-            Y=0.706,
-            location="gym",
-            color="violet",
-            object="violet_ball",
-            goal_publisher=goal_publisher,
-        ),
-    )
+    # entry = menu_handler.insert(
+    #     "In the gym",
+    #     parent=sub_handler1,
+    #     callback=partial(
+    #         move_and_find,
+    #         x=1.344,
+    #         y=2.1515,
+    #         z=0,
+    #         R=0,
+    #         P=0,
+    #         Y=0.706,
+    #         location="gym",
+    #         color="violet",
+    #         object="violet_ball",
+    #         goal_publisher=goal_publisher,
+    #     ),
+    # )
 
-    sub_handler1 = menu_handler.insert("Red ball", parent=h_second_entry)
+    # sub_handler1 = menu_handler.insert("Red ball", parent=h_second_entry)
 
-    entry = menu_handler.insert(
-        "In the bedroom",
-        parent=sub_handler1,
-        callback=partial(
-            move_and_find,
-            x=-4.409525,
-            y=-0.182006,
-            z=0,
-            R=0,
-            P=0,
-            Y=1.980398,
-            location="bedroom",
-            color="red",
-            object="red_ball",
-            goal_publisher=goal_publisher,
-        ),
-    )
+    # entry = menu_handler.insert(
+    #     "In the bedroom",
+    #     parent=sub_handler1,
+    #     callback=partial(
+    #         move_and_find,
+    #         x=-4.409525,
+    #         y=-0.182006,
+    #         z=0,
+    #         R=0,
+    #         P=0,
+    #         Y=1.980398,
+    #         location="bedroom",
+    #         color="red",
+    #         object="red_ball",
+    #         goal_publisher=goal_publisher,
+    #     ),
+    # )
 
-    entry = menu_handler.insert(
-        "In the gym",
-        parent=sub_handler1,
-        callback=partial(
-            move_and_find,
-            x=1.344,
-            y=2.1515,
-            z=0,
-            R=0,
-            P=0,
-            Y=0.706,
-            location="gym",
-            color="red",
-            object="red_ball",
-            goal_publisher=goal_publisher,
-        ),
-    )
+    # entry = menu_handler.insert(
+    #     "In the gym",
+    #     parent=sub_handler1,
+    #     callback=partial(
+    #         move_and_find,
+    #         x=1.344,
+    #         y=2.1515,
+    #         z=0,
+    #         R=0,
+    #         P=0,
+    #         Y=0.706,
+    #         location="gym",
+    #         color="red",
+    #         object="red_ball",
+    #         goal_publisher=goal_publisher,
+    #     ),
+    # )
 
-    sub_handler1 = menu_handler.insert("Blue ball", parent=h_second_entry)
+    # sub_handler1 = menu_handler.insert("Blue ball", parent=h_second_entry)
 
-    entry = menu_handler.insert(
-        "In the bedroom",
-        parent=sub_handler1,
-        callback=partial(
-            move_and_find,
-            x=-4.409525,
-            y=-0.182006,
-            z=0,
-            R=0,
-            P=0,
-            Y=1.980398,
-            location="bedroom",
-            color="blue",
-            object="blue_ball",
-            goal_publisher=goal_publisher,
-        ),
-    )
+    # entry = menu_handler.insert(
+    #     "In the bedroom",
+    #     parent=sub_handler1,
+    #     callback=partial(
+    #         move_and_find,
+    #         x=-4.409525,
+    #         y=-0.182006,
+    #         z=0,
+    #         R=0,
+    #         P=0,
+    #         Y=1.980398,
+    #         location="bedroom",
+    #         color="blue",
+    #         object="blue_ball",
+    #         goal_publisher=goal_publisher,
+    #     ),
+    # )
 
-    entry = menu_handler.insert(
-        "In the gym",
-        parent=sub_handler1,
-        callback=partial(
-            move_and_find,
-            x=1.344,
-            y=2.1515,
-            z=0,
-            R=0,
-            P=0,
-            Y=0.706,
-            location="gym",
-            color="blue",
-            object="blue_ball",
-            goal_publisher=goal_publisher,
-        ),
-    )
+    # entry = menu_handler.insert(
+    #     "In the gym",
+    #     parent=sub_handler1,
+    #     callback=partial(
+    #         move_and_find,
+    #         x=1.344,
+    #         y=2.1515,
+    #         z=0,
+    #         R=0,
+    #         P=0,
+    #         Y=0.706,
+    #         location="gym",
+    #         color="blue",
+    #         object="blue_ball",
+    #         goal_publisher=goal_publisher,
+    #     ),
+    # )
 
-    sub_handler1 = menu_handler.insert("person", parent=h_second_entry)
+    # sub_handler1 = menu_handler.insert("person", parent=h_second_entry)
 
-    entry = menu_handler.insert(
-        "In the room",
-        parent=sub_handler1,
-        callback=partial(
-            move_and_find,
-            x=-4.409525,
-            y=-0.182006,
-            z=0,
-            R=0,
-            P=0,
-            Y=1.980398,
-            location="bedroom",
-            color="violet",
-            object="person",
-            goal_publisher=goal_publisher,
-        ),
-    )
+    # entry = menu_handler.insert(
+    #     "In the room",
+    #     parent=sub_handler1,
+    #     callback=partial(
+    #         move_and_find,
+    #         x=-4.409525,
+    #         y=-0.182006,
+    #         z=0,
+    #         R=0,
+    #         P=0,
+    #         Y=1.980398,
+    #         location="bedroom",
+    # h_first_entry = menu_handler.insert("Move to")
 
-    entry = menu_handler.insert(
-        "In the gym",
-        parent=sub_handler1,
-        callback=partial(
-            move_and_find,
-            x=1.344,
-            y=2.1515,
-            z=0,
-            R=0,
-            P=0,
-            Y=0.706,
-            location="gym",
-            color="violet",
-            object="person",
-            goal_publisher=goal_publisher,
-        ),
-    )
+    # entry = menu_handler.insert(
+    #     "kitchen",
+    #     parent=h_first_entry,
+    #     callback=partial(
+    #         moveTo,
+    #         x=6.568593,
+    #         y=-1.788789,
+    #         z=0,
+    #         R=0,
+    #         P=0,
+    #         Y=-1.504141,
+    #         location="kitchen",
+    #         goal_publisher=goal_publisher,
+    #     ),
+    # )
+
+    # entry = menu_handler.insert(
+    #     "bedroom",
+    #     parent=h_first_entry,
+    #     callback=partial(
+    #         moveTo,
+    #         x=-4.409525,
+    #         y=-0.182006,
+    #         z=0,
+    #         R=0,
+    #         P=0,
+    #         Y=1.980398,
+    #         location="bedroom",
+    #         goal_publisher=goal_publisher,
+    #     ),
+    # )
+
+    # entry = menu_handler.insert(
+    #     "livingroom",
+    #     parent=h_first_entry,
+    #     callback=partial(
+    #         moveTo,
+    #         x=0.987,
+    #         y=0.039,
+    #         z=0,
+    #         R=0,
+    #         P=0,
+    #         Y=0,
+    #         location="livingroom",
+    #         goal_publisher=goal_publisher,
+    #     ),
+    # )
+
+    # entry = menu_handler.insert(
+    #     "gym",
+    #     parent=h_first_entry,
+    #     callback=partial(
+    #         moveTo,
+    #         x=1.344,
+    #         y=2.1515,
+    #         z=0,
+    #         R=0,
+    #         P=0,
+    #         Y=0.706,
+    #         location="gym",
+    #         goal_publisher=goal_publisher,
+    #     ),
+    # )
+    #         color="violet",
+    #         object="person",
+    #         goal_publisher=goal_publisher,
+    #     ),
+    # )
+
+    # entry = menu_handler.insert(
+    #     "In the gym",
+    #     parent=sub_handler1,
+    #     callback=partial(
+    #         move_and_find,
+    #         x=1.344,
+    #         y=2.1515,
+    #         z=0,
+    #         R=0,
+    #         P=0,
+    #         Y=0.706,
+    #         location="gym",
+    #         color="violet",
+    #         object="person",
+    #         goal_publisher=goal_publisher,
+    #     ),
+    # )
 
     h_third_entry = menu_handler.insert("Take picture", callback=take_picture)
 
