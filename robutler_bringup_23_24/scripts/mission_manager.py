@@ -19,7 +19,7 @@ import json
 from spawn_object import ObjectSpawner
 import os
 import random
-
+from take_picture import TakePhoto
 
 server = None
 marker_pos = 1
@@ -120,15 +120,15 @@ def deepCb(feedback):
 
 def moveTo(feedback, location, goal_publisher):
     global robutler_loc_dict
-    print("Called moving to " + location)
+    rospy.loginfo(f"Called moving to {location}")
 
     for division_name, division_data in robutler_loc_dict.items():
-        rospy.loginfo(f"Going to Division: {division_name}")
         for section_name, section_data in division_data.items():
             if section_name == location:
                 coordinates = section_data.get("Coords")
                 if coordinates:
-                    rospy.loginfo(f"Coordinates for section {location}: {coordinates}")
+                    rospy.loginfo(f"Coordinates for {location}: {coordinates}")
+                    break
                 else:
                     rospy.loginfo(f"No coordinates found for section {location}")
     (x, y, Y) = coordinates
@@ -171,8 +171,8 @@ def move_and_find(feedback, location, object, goal_publisher):
     global found_object_listener, objs_Class, objs_Percent, count_obj
 
     moveTo(feedback, location, goal_publisher)
-    print(f"Finding {object} in the {location}")
-
+    rospy.loginfo(f"Finding {object} in the {location}")
+    time.sleep(2)
     rospy.loginfo("Bounding Boxes subscriber created")
     found_object_listener = rospy.Subscriber(
         "/darknet_ros/bounding_boxes", BoundingBoxes, listening_to_objects
@@ -195,11 +195,13 @@ def move_and_find(feedback, location, object, goal_publisher):
     )
 
 
-# TODO transfor take_picture to a header and include it here instead of doing bashcommand
+# TODO: change take:picture to be in it's own pkg and be a node sub that waits for a msg from a mission_manager
 def take_picture(feedback):
-    bashCommand = "rosrun perception_robutler take_picture.py"
-    picture_process = subprocess.Popen(bashCommand.split())
-    output, error = picture_process.communicate()
+    photo_class = TakePhoto()
+    photo_class.take_picture()
+    # bashCommand = "rosrun perception_robutler take_picture.py"
+    # picture_process = subprocess.Popen(bashCommand.split())
+    # output, error = picture_process.communicate()
 
 
 def check(feedback, location, object, goal_publisher):
@@ -228,7 +230,7 @@ def find_in_house(feedback, object, goal_publisher):
             if coords:
                 move_and_find(
                     feedback=feedback,
-                    location=str(division_name),
+                    location=division_name,
                     object=object,
                     goal_publisher=goal_publisher,
                 )
@@ -237,6 +239,7 @@ def find_in_house(feedback, object, goal_publisher):
     rospy.loginfo(f"Robutler found {total_objs} {object} in the house")
 
 
+# TODO: change the spawn_object to be in it's own package and be a node with pub(obj id) and sub(comand) communication with mission_manager
 def spawn_move_to(feedback, division, sp_object, goal_publisher):
     global active_objects, robutler_loc_dict, count_obj
     rospy.loginfo(f"Spawning object ({sp_object}) in the {division}")
@@ -260,6 +263,7 @@ def spawn_move_to(feedback, division, sp_object, goal_publisher):
             break
 
 
+# TODO: change dictionary to also be a different pkg of mgs Division_Section_Coords
 def main():
     global server, h_first_entry, h_mode_last, robutler_loc_dict
 
@@ -285,6 +289,19 @@ def main():
         if os.path.isdir(os.path.join(obj_path, item)):
             obj_names.append(item)
 
+    h_move_entry = menu_handler.insert("Move to")
+
+    for division_name, division_data in robutler_loc_dict.items():
+        h_move_division = menu_handler.insert(division_name, parent=h_move_entry)
+        for section_name, section_data in division_data.items():
+            menu_handler.insert(
+                section_name,
+                parent=h_move_division,
+                callback=partial(
+                    moveTo, location=section_name, goal_publisher=goal_publisher
+                ),
+            )
+
     h_find_entry = menu_handler.insert("Find")
 
     for spawn_obj in obj_names:
@@ -301,19 +318,6 @@ def main():
                 ),
             )
 
-    h_move_entry = menu_handler.insert("Move to")
-
-    for division_name, division_data in robutler_loc_dict.items():
-        h_move_division = menu_handler.insert(division_name, parent=h_move_entry)
-        for section_name, section_data in division_data.items():
-            menu_handler.insert(
-                section_name,
-                parent=h_move_division,
-                callback=partial(
-                    moveTo, location=section_name, goal_publisher=goal_publisher
-                ),
-            )
-
     h_photo_entry = menu_handler.insert("Take picture", callback=take_picture)
 
     # --------------------------------------------------------------------------------------------------------------------
@@ -325,14 +329,7 @@ def main():
         parent=h_fourth_entry,
         callback=partial(
             move_and_find,
-            x=-7.622083,
-            y=0.526304,
-            z=0,
-            R=0,
-            P=0,
-            Y=2.379986,
-            location="table_bedroom",
-            color="black",
+            location="bed_table_on_top",
             object="pc",
             goal_publisher=goal_publisher,
         ),
@@ -343,14 +340,7 @@ def main():
         parent=h_fourth_entry,
         callback=partial(
             move_and_find,
-            x=-7.622083,
-            y=0.526304,
-            z=0,
-            R=0,
-            P=0,
-            Y=2.379986,
-            location="table_bedroom",
-            color="red",
+            location="top_dining_table",
             object="can_coke",
             goal_publisher=goal_publisher,
         ),
@@ -361,14 +351,7 @@ def main():
         parent=h_fourth_entry,
         callback=partial(
             move_and_find,
-            x=-7.622083,
-            y=0.526304,
-            z=0,
-            R=0,
-            P=0,
-            Y=2.379986,
-            location="table_bedroom",
-            color="darkgreen",
+            location="top_dining_table",
             object="bottle",
             goal_publisher=goal_publisher,
         ),
@@ -379,13 +362,7 @@ def main():
         parent=h_fourth_entry,
         callback=partial(
             check,
-            x=5.065660,
-            y=0.698208,
-            z=0,
-            R=0,
-            P=0,
-            Y=0.148759,
-            location="diningtable",
+            location="top_dining_table",
             object="diningtable",
             goal_publisher=goal_publisher,
         ),

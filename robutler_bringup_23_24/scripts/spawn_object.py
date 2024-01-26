@@ -34,7 +34,7 @@ class ObjectSpawner:
                 for filename in os.listdir(dir_path):
                     if filename.endswith(".sdf"):
                         sdf_filename = filename
-                        rospy.loginfo(f"Found {dirname}")
+                        # rospy.loginfo(f"Found {dirname}")
                         file_path = os.path.join(dir_path, sdf_filename)
                         with open(file_path, "r") as f:
                             sdf_content = f.read()
@@ -71,20 +71,20 @@ class ObjectSpawner:
 
         temp_sections = self.divisions[division]
 
-        rospy.loginfo(temp_sections)
+        # rospy.loginfo(temp_sections)
 
         num_sec = list(temp_sections.keys())
         random_sec = random.choice(num_sec)
         random_sec_coords = temp_sections.get(random_sec, {}).get("Coords", [])
         (x, y, z, roll, pitch, yaw) = random_sec_coords
 
-        rospy.loginfo(random_sec_coords)
+        # rospy.loginfo(random_sec_coords)
 
         pose = Pose()
         pose.position = Point(x, y, z)
         q = quaternion_from_euler(roll, pitch, yaw)
         pose.orientation = Quaternion(*q)
-        rospy.loginfo(pose)
+        # rospy.loginfo(pose)
         uuid_str = str(uuid.uuid4())
 
         self.object_ns = self.objects[object_name]["name"] + "_" + uuid_str
