@@ -183,7 +183,9 @@ def move_and_find(feedback, location, object, goal_publisher):
             time.sleep(0.5)
             timer += 0.5
             if timer > 2:
-                rospy.logwarn(f"Darknet didn't detect any object here or Darknet is off")
+                rospy.logwarn(
+                    f"Darknet didn't detect any object here or Darknet is off"
+                )
                 break
     except:
         rospy.loginfo(f"Robutler has found: {objs_Class} - {objs_Percent}")
@@ -252,7 +254,8 @@ def delete_objs(feedback, divisions, spawner_publisher):
 def spawn_move_to(feedback, division, sp_object, goal_publisher, spawner_publisher):
     global active_objects, robutler_loc_dict, count_obj
     partial(delete_objs, divisions=division, spawner_publisher=spawner_publisher)
-    if random.getrandbits(1):
+    
+    if any([bool(random.getrandbits(1)) for _ in range(3)]):
         rospy.loginfo(f"Spawning object ({sp_object}) in the {division}")
         spawn_msg = Obj_Spawner_msg()
         spawn_msg.object_name = sp_object
