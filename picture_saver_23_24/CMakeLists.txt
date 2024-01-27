@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(robutler_bringup_23_24)
+project(picture_saver_23_24)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -10,6 +10,8 @@ project(robutler_bringup_23_24)
 find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
+  sensor_msgs
+  cv_bridge
   message_generation
 )
 
@@ -47,10 +49,11 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-add_message_files(
-  FILES
-  Obj_Spawner_msg.msg
-)
+# add_message_files(
+#   FILES
+#   Message1.msg
+#   Message2.msg
+# )
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -67,10 +70,10 @@ add_message_files(
 # )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES
-  std_msgs
-)
+# generate_messages(
+#   DEPENDENCIES
+#   std_msgs
+# )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -103,8 +106,8 @@ generate_messages(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES robutler_bringup_23_24
-  CATKIN_DEPENDS rospy std_msgs message_runtime
+#  LIBRARIES picture_saver_23_24
+  CATKIN_DEPENDS rospy std_msgs sensor_msgs cv_bridge message_generation
 #  DEPENDS system_lib
 )
 
@@ -121,7 +124,7 @@ include_directories(
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/robutler_bringup_23_24.cpp
+#   src/${PROJECT_NAME}/picture_saver_23_24.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -132,8 +135,8 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/robutler_bringup_23_24_node.cpp)
-# add_executable(take_picture perception_robutler/src/take_picture.cpp)
+# add_executable(${PROJECT_NAME}_node src/picture_saver_23_24_node.cpp)
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -145,7 +148,7 @@ include_directories(
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(take_picture
+# target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
 # )
 
@@ -159,12 +162,7 @@ include_directories(
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
 # catkin_install_python(PROGRAMS
-#   ../perception_robutler/src/take_picture.py
-#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
-
-# install(PROGRAMS
-#   ../perception_robutler/src/take_picture.py
+#   scripts/my_python_script
 #   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 # )
 
@@ -201,7 +199,7 @@ include_directories(
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_robutler_bringup_23_24.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_picture_saver_23_24.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

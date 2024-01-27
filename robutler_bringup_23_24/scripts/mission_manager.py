@@ -12,14 +12,14 @@ import uuid
 from tf.transformations import quaternion_from_euler
 from move_base_msgs.msg import MoveBaseActionResult
 from darknet_ros_msgs.msg import BoundingBoxes
+from std_msgs.msg import Bool
 import cv2
 import time
 import pandas as pd
 import json
-from spawn_object import ObjectSpawner
+from robutler_bringup_23_24.msg import Obj_Spawner_msg
 import os
 import random
-from take_picture import TakePhoto
 
 server = None
 marker_pos = 1
@@ -145,7 +145,7 @@ def moveTo(feedback, location, goal_publisher):
     rospy.loginfo(f"Sending Goal move to {location}")
     goal_publisher.publish(ps)
 
-    result_msg = rospy.wait_for_message("/move_base/result", MoveBaseActionResult)
+    rospy.wait_for_message("/move_base/result", MoveBaseActionResult)
     # rospy.loginfo(result_msg.status.status)
     # TODO: change this While to maybe threads, One do the main while the others triggers a flag when result_msg.status.status value = 3
     #                                                                           or lissens to MoveBaseActionStatus  status_msg.status.status = 3
@@ -172,16 +172,19 @@ def move_and_find(feedback, location, object, goal_publisher):
 
     moveTo(feedback, location, goal_publisher)
     rospy.loginfo(f"Finding {object} in the {location}")
-    time.sleep(2)
-    rospy.loginfo("Bounding Boxes subscriber created")
+    rospy.loginfo("Creating Bounding Boxes subscriber...")
+    time.sleep(2)  # Do to the delay betweeen movement and darknet image aquisition
     found_object_listener = rospy.Subscriber(
         "/darknet_ros/bounding_boxes", BoundingBoxes, listening_to_objects
     )
-    time.sleep(2)
+    timer = 0
     try:
         while found_object_listener.get_num_connections() >= 0:
             time.sleep(0.5)
-            continue
+            timer += 0.5
+            if timer > 2:
+                rospy.logwarn(f"Darknet didn't detect any object here or Darknet is off")
+                break
     except:
         rospy.loginfo(f"Robutler has found: {objs_Class} - {objs_Percent}")
 
@@ -195,13 +198,9 @@ def move_and_find(feedback, location, object, goal_publisher):
     )
 
 
-# TODO: change take:picture to be in it's own pkg and be a node sub that waits for a msg from a mission_manager
-def take_picture(feedback):
-    photo_class = TakePhoto()
-    photo_class.take_picture()
-    # bashCommand = "rosrun perception_robutler take_picture.py"
-    # picture_process = subprocess.Popen(bashCommand.split())
-    # output, error = picture_process.communicate()
+def take_picture(feedback, take_photo_pub):
+    rospy.loginfo("Sending Flag to take_photo_pub")
+    take_photo_pub.publish(Bool(True))
 
 
 def check(feedback, location, object, goal_publisher):
@@ -239,17 +238,30 @@ def find_in_house(feedback, object, goal_publisher):
     rospy.loginfo(f"Robutler found {total_objs} {object} in the house")
 
 
+def delete_objs(feedback, divisions, spawner_publisher):
+    for division in divisions:
+        rospy.loginfo(f"Removing objects in the {division}")
+        spawn_msg = Obj_Spawner_msg()
+        spawn_msg.object_name = "All"
+        spawn_msg.division = division
+        spawn_msg.spawn_object = False
+        spawner_publisher.publish(spawn_msg)
+
+
 # TODO: change the spawn_object to be in it's own package and be a node with pub(obj id) and sub(comand) communication with mission_manager
-def spawn_move_to(feedback, division, sp_object, goal_publisher):
+def spawn_move_to(feedback, division, sp_object, goal_publisher, spawner_publisher):
     global active_objects, robutler_loc_dict, count_obj
-    rospy.loginfo(f"Spawning object ({sp_object}) in the {division}")
-    obj_1 = ObjectSpawner()
-    obj_1.spawn_object(division=division, object_name=sp_object)
-    active_objects.append(obj_1)
+    partial(delete_objs, divisions=division, spawner_publisher=spawner_publisher)
     if random.getrandbits(1):
-        obj_1.delete_object()
-        active_objects.remove(obj_1)
-    rospy.loginfo(f"Object ({sp_object}) spawned in {division}")
+        rospy.loginfo(f"Spawning object ({sp_object}) in the {division}")
+        spawn_msg = Obj_Spawner_msg()
+        spawn_msg.object_name = sp_object
+        spawn_msg.division = division
+        spawn_msg.spawn_object = True
+        spawner_publisher.publish(spawn_msg)
+        rospy.loginfo(f"Object ({sp_object}) spawned in {division}")
+    else:
+        rospy.loginfo(f"It will not spawn the object ({sp_object}) in {division}")
 
     for section_name, section_data in robutler_loc_dict[division].items():
         move_and_find(
@@ -274,6 +286,12 @@ def main():
 
     # Create move_base_simple/goal publisher
     goal_publisher = rospy.Publisher("/move_base_simple/goal", PoseStamped)
+    take_photo_pub = rospy.Publisher(
+        "/mission_manager/take_photo_flag", Bool, queue_size=10
+    )
+    spawner_publisher = rospy.Publisher(
+        "/mission_manager/obj_spawner", Obj_Spawner_msg, queue_size=2
+    )
 
     server = InteractiveMarkerServer("mission")
     print(server)
@@ -312,13 +330,16 @@ def main():
                 parent=h_find_obj_entry,
                 callback=partial(
                     spawn_move_to,
+                    spawner_publisher=spawner_publisher,
                     division=division_name,
                     sp_object=spawn_obj,
                     goal_publisher=goal_publisher,
                 ),
             )
 
-    h_photo_entry = menu_handler.insert("Take picture", callback=take_picture)
+    h_photo_entry = menu_handler.insert(
+        "Take picture", callback=partial(take_picture, take_photo_pub=take_photo_pub)
+    )
 
     # --------------------------------------------------------------------------------------------------------------------
 

@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<launch>
+    <node pkg="picture_saver_23_24" type="take_picture.py" name="take_picture_node" output="screen"/>
+</launch>

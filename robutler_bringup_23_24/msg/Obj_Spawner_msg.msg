@@ -1,0 +1,3 @@
+string object_name
+string division
+bool spawn_object
