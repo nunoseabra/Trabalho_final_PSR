@@ -36,6 +36,18 @@ rosrun robutler_bringup_23_24 mission_manager.py
 
 rosrun robutler_bringup_23_24 spawn_object.py - l (Location) -o (Object)
 
+<---------- Manipulation ----------->
+
+roslaunch robutler_bringup_23_24 gazebo.launch
+
+Em um outro terminal Crtl+Shift+t:
+
+roslaunch turtlebot3_manipulation_moveit_config move_group.launch
+
+Em um outro terminal Crtl+Shift+t
+
+roslaunch turtlebot3_manipulation_moveit_config moveit_rviz.launch
+
 
 
 
