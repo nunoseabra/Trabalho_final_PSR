@@ -1,29 +1,41 @@
 #!/usr/bin/env python3
 
 import rospy
-import rospkg
+from std_msgs.msg import String
 from gazebo_msgs.srv import SpawnModel, DeleteModel
 from geometry_msgs.msg import Pose, Point, Quaternion
 from tf.transformations import quaternion_from_euler
 import uuid
-import json
 import random
 import os
-import time
+import json
+import rospkg
+from object_spawner_23_24.srv import SpawnObject, SpawnObjectResponse, DeleteObject
 
 
 class ObjectSpawner:
     def __init__(self):
-        # rospy.init_node("object_spawner", log_level=rospy.INFO)
-        self.service_name = "gazebo/spawn_sdf_model"
-        rospy.wait_for_service(self.service_name)
-        self.service_client = rospy.ServiceProxy(self.service_name, SpawnModel)
+        rospy.init_node("spawner")
+        self.spawn_service_client = rospy.ServiceProxy(
+            "/gazebo/spawn_sdf_model", SpawnModel
+        )
+        self.delete_service_client = rospy.ServiceProxy(
+            "/gazebo/delete_model", DeleteModel
+        )
+
         self.package_path = (
             rospkg.RosPack().get_path("robutler_description_23_24") + "/models/"
         )
         self.objects = self.load_objects()
         self.divisions = self.define_divisions()
-        self.object_ns = None
+
+        # Setup services for mission_manager
+        self.spawn_object_service = rospy.Service(
+            "/spawner/spawn_object", SpawnObject, self.spawn_object
+        )
+        self.delete_object_service = rospy.Service(
+            "/spawner/delete_object", DeleteObject, self.delete_object
+        )
 
     def load_objects(self):
         objects = {}
@@ -34,14 +46,14 @@ class ObjectSpawner:
                 for filename in os.listdir(dir_path):
                     if filename.endswith(".sdf"):
                         sdf_filename = filename
-                        # rospy.loginfo(f"Found {dirname}")
                         file_path = os.path.join(dir_path, sdf_filename)
                         with open(file_path, "r") as f:
                             sdf_content = f.read()
                         break
                 if sdf_filename:
+                    prefix_name = dirname.split("_")[0]
                     objects[dirname] = {
-                        "name": dirname,
+                        "name": prefix_name,
                         "sdf": sdf_content,
                     }
         return objects
@@ -56,70 +68,80 @@ class ObjectSpawner:
             divisions[division_name] = division_data
         return divisions
 
-    def spawn_object(self, division, object_name):
+    def spawn_object(self, req):
+        division = req.division
+        object_name = req.object_name.lower()
+        object_size = req.object_size
+
         if division not in self.divisions:
             rospy.logerr(
                 f"Division '{division}' is unknown. Available locations are {list(self.divisions.keys())}"
             )
             return
 
-        if object_name not in self.objects:
+        object_names = {obj["name"] for obj in self.objects.values()}
+        if object_name not in object_names:
             rospy.logerr(
-                f"Object '{object_name}' is unknown. Available objects are {list(self.objects.keys())}"
+                f"Object '{object_name}' is unknown. Available objects are {list(object_names)}"
             )
             return
 
         temp_sections = self.divisions[division]
-
-        # rospy.loginfo(temp_sections)
-
-        num_sec = list(temp_sections.keys())
-        random_sec = random.choice(num_sec)
+        valid_sections = []
+        if object_size == "Big":
+            for section_name, section_data in temp_sections.items():
+                if "Size" in section_data and section_data["Size"] == object_size:
+                    valid_sections.append(section_name)
+        else:
+            valid_sections = list(temp_sections.keys())
+        random_sec = random.choice(valid_sections)
         random_sec_coords = temp_sections.get(random_sec, {}).get("Coords", [])
         (x, y, z, roll, pitch, yaw) = random_sec_coords
-
-        # rospy.loginfo(random_sec_coords)
 
         pose = Pose()
         pose.position = Point(x, y, z)
         q = quaternion_from_euler(roll, pitch, yaw)
         pose.orientation = Quaternion(*q)
-        # rospy.loginfo(pose)
+
         uuid_str = str(uuid.uuid4())
 
-        self.object_ns = self.objects[object_name]["name"] + "_" + uuid_str
+        matching_objects = [
+            obj for obj in self.objects.values() if obj["name"] == object_name
+        ]
+
+        if not matching_objects:
+            rospy.logerr(f"No objects found with the prefix '{object_name}'")
+            return
+
+        selected_object = random.choice(matching_objects)
+        uuid_str = str(uuid.uuid4())
+
         try:
-            self.service_client(
-                model_name=self.objects[object_name]["name"] + "_" + uuid_str,
-                model_xml=self.objects[object_name]["sdf"],
-                robot_namespace=self.objects[object_name]["name"] + "_" + uuid_str,
+            self.spawn_service_client(
+                model_name=selected_object["name"] + "_" + uuid_str,
+                model_xml=selected_object["sdf"],
+                robot_namespace=selected_object["name"] + "_" + uuid_str,
                 initial_pose=pose,
                 reference_frame="world",
             )
-            rospy.loginfo(f"Spawned object '{object_name}' at location '{division}'")
+            rospy.loginfo(f"Spawned object '{object_name}' in '{division}'")
+            return SpawnObjectResponse(
+                object_namespace=selected_object["name"] + "_" + uuid_str
+            )
+
         except rospy.ServiceException as e:
             rospy.logerr(f"Service call failed: {e}")
+            return SpawnObjectResponse(object_namespace="")
 
-    def delete_object(self):
+    def delete_object(self, req):
+        object_ns = req.object_ns
         try:
-            delete_service_name = "/gazebo/delete_model"
-            rospy.wait_for_service(delete_service_name)
-            delete_service = rospy.ServiceProxy(delete_service_name, DeleteModel)
-            delete_service(self.object_ns)
-            rospy.loginfo(f"Deleted object '{self.object_ns}'")
+            self.delete_service_client(object_ns)
+            rospy.loginfo(f"Deleted object '{object_ns}'")
         except rospy.ServiceException as e:
             rospy.logerr(f"Service call failed: {e}")
-
-
-def spawn_object_at_location(location):
-    spawner = ObjectSpawner()
-    spawner.spawn_object(location, "person_standing")
-    time.sleep(4)
-    spawner.delete_object()
 
 
 if __name__ == "__main__":
-    rospy.init_node("spawner")
-    total_active_objects = []
-
-    
+    object = ObjectSpawner()
+    rospy.spin()

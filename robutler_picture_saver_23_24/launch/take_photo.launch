@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<launch>
+    <node pkg="robutler_picture_saver_23_24" type="take_photo.py" name="take_photo_server" output="screen"/>
+</launch>

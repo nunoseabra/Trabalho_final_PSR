@@ -1,23 +1,23 @@
 #!/usr/bin/env python3
 
 from functools import partial
-import subprocess
 import rospy
 from interactive_markers.interactive_marker_server import *
 from interactive_markers.menu_handler import *
 from visualization_msgs.msg import *
 import rospkg
 from geometry_msgs.msg import Pose, Point, Quaternion, PoseStamped
-import uuid
 from tf.transformations import quaternion_from_euler
 from move_base_msgs.msg import MoveBaseActionResult
 from darknet_ros_msgs.msg import BoundingBoxes
-from std_msgs.msg import Bool
 import cv2
 import time
 import pandas as pd
 import json
-from robutler_bringup_23_24.msg import Obj_Spawner_msg
+
+from object_spawner_23_24.srv import SpawnObject, DeleteObject
+from robutler_picture_saver_23_24.srv import TakePhoto
+
 import os
 import random
 
@@ -200,9 +200,15 @@ def move_and_find(feedback, location, object, goal_publisher):
     )
 
 
-def take_picture(feedback, take_photo_pub):
-    rospy.loginfo("Sending Flag to take_photo_pub")
-    take_photo_pub.publish(Bool(True))
+def take_picture(feedback, take_photo_client):
+    rospy.wait_for_service("take_photo")
+    try:
+        response = take_photo_client()
+        rospy.logwarn(response)
+        rospy.loginfo("Photo taken successfully")
+
+    except rospy.ServiceException as e:
+        rospy.logwarn("Service call failed: %s" % e)
 
 
 def check(feedback, location, object, goal_publisher):
@@ -240,29 +246,54 @@ def find_in_house(feedback, object, goal_publisher):
     rospy.loginfo(f"Robutler found {total_objs} {object} in the house")
 
 
-def delete_objs(feedback, divisions, spawner_publisher):
-    for division in divisions:
-        rospy.loginfo(f"Removing objects in the {division}")
-        spawn_msg = Obj_Spawner_msg()
-        spawn_msg.object_name = "All"
-        spawn_msg.division = division
-        spawn_msg.spawn_object = False
-        spawner_publisher.publish(spawn_msg)
+def delete_objs(feedback, object_ns, delete_object_client):
+    req = DeleteObject()
+    req.object_ns = object_ns
+
+    try:
+        resp = delete_object_client(req)
+        rospy.loginfo("Object {object_ns} deleted")
+    except rospy.ServiceException as e:
+        rospy.logerr("Service call failed: %s" % e)
 
 
 # TODO: change the spawn_object to be in it's own package and be a node with pub(obj id) and sub(comand) communication with mission_manager
-def spawn_move_to(feedback, division, sp_object, goal_publisher, spawner_publisher):
+def spawn_move_to(
+    feedback,
+    division,
+    sp_object,
+    object_size,
+    goal_publisher,
+    spawn_object_client,
+    delete_object_client,
+):
     global active_objects, robutler_loc_dict, count_obj
-    partial(delete_objs, divisions=division, spawner_publisher=spawner_publisher)
-    
+    for object_ns in active_objects:
+        partial(
+            delete_objs, object_ns=object_ns, delete_object_client=delete_object_client
+        )
+
     if any([bool(random.getrandbits(1)) for _ in range(3)]):
         rospy.loginfo(f"Spawning object ({sp_object}) in the {division}")
-        spawn_msg = Obj_Spawner_msg()
-        spawn_msg.object_name = sp_object
-        spawn_msg.division = division
-        spawn_msg.spawn_object = True
-        spawner_publisher.publish(spawn_msg)
-        rospy.loginfo(f"Object ({sp_object}) spawned in {division}")
+
+        # req = SpawnObject()
+        # req.division = division
+        # req.object_name = sp_object
+        # req.object_size = object_size
+        # rospy.loginfo(req)
+
+        try:
+            resp = spawn_object_client(
+                division=division, object_name=sp_object, object_size=object_size
+            )
+            active_objects.append(resp.object_namespace)
+            rospy.loginfo(
+                "Object spawned in {division}, robot namespace: %s"
+                % resp.object_namespace
+            )
+        except rospy.ServiceException as e:
+            rospy.loginfo("IT WAS HEERE MFKR")
+            rospy.logerr("Service call failed: %s" % e)
     else:
         rospy.loginfo(f"It will not spawn the object ({sp_object}) in {division}")
 
@@ -289,12 +320,9 @@ def main():
 
     # Create move_base_simple/goal publisher
     goal_publisher = rospy.Publisher("/move_base_simple/goal", PoseStamped)
-    take_photo_pub = rospy.Publisher(
-        "/mission_manager/take_photo_flag", Bool, queue_size=10
-    )
-    spawner_publisher = rospy.Publisher(
-        "/mission_manager/obj_spawner", Obj_Spawner_msg, queue_size=2
-    )
+    spawn_object_client = rospy.ServiceProxy("spawner/spawn_object", SpawnObject)
+    delete_object_client = rospy.ServiceProxy("spawner/delete_object", DeleteObject)
+    take_photo_client = rospy.ServiceProxy("take_photo_server", TakePhoto)
 
     server = InteractiveMarkerServer("mission")
     print(server)
@@ -304,11 +332,8 @@ def main():
     with open(fullpath, "r") as dictionary_file:
         robutler_loc_dict = json.load(dictionary_file)
 
-    obj_path = rospkg.RosPack().get_path("robutler_description_23_24") + "/models/"
-    obj_names = []
-    for item in os.listdir(obj_path):
-        if os.path.isdir(os.path.join(obj_path, item)):
-            obj_names.append(item)
+    obj_names = ["bottle", "laptop", "person", "sphere", "vase"]
+    object_sizes = ["Small", "Small", "Big", "Small", "Small"]
 
     h_move_entry = menu_handler.insert("Move to")
 
@@ -325,7 +350,7 @@ def main():
 
     h_find_entry = menu_handler.insert("Find")
 
-    for spawn_obj in obj_names:
+    for index_object, spawn_obj in enumerate(obj_names):
         h_find_obj_entry = menu_handler.insert(spawn_obj, parent=h_find_entry)
         for division_name, division_data in robutler_loc_dict.items():
             menu_handler.insert(
@@ -333,15 +358,18 @@ def main():
                 parent=h_find_obj_entry,
                 callback=partial(
                     spawn_move_to,
-                    spawner_publisher=spawner_publisher,
+                    spawn_object_client=spawn_object_client,
+                    delete_object_client=delete_object_client,
                     division=division_name,
+                    object_size=object_sizes[index_object],
                     sp_object=spawn_obj,
                     goal_publisher=goal_publisher,
                 ),
             )
 
     h_photo_entry = menu_handler.insert(
-        "Take picture", callback=partial(take_picture, take_photo_pub=take_photo_pub)
+        "Take picture",
+        callback=partial(take_picture, take_photo_client=take_photo_client),
     )
 
     # --------------------------------------------------------------------------------------------------------------------

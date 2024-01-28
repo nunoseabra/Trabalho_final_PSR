@@ -11,6 +11,14 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   message_generation
+  interactive_markers
+  visualization_msgs
+  geometry_msgs
+  move_base_msgs
+  darknet_ros_msgs
+  cv_bridge
+  robutler_picture_saver_23_24
+  object_spawner_23_24
 )
 
 ## System dependencies are found with CMake's conventions
@@ -47,18 +55,18 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-add_message_files(
-  FILES
-  Obj_Spawner_msg.msg
-)
-
-## Generate services in the 'srv' folder
-# add_service_files(
+# add_message_files(
 #   FILES
-#   Service1.srv
-#   Service2.srv
+#   Obj_Spawner_msg.msg
 # )
 
+## Generate services in the 'srv' folder
+add_service_files(
+  FILES
+  TakePhoto.srv
+  SpawnObject.srv
+  DeleteObject.srv
+)
 ## Generate actions in the 'action' folder
 # add_action_files(
 #   FILES
@@ -104,7 +112,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES robutler_bringup_23_24
-  CATKIN_DEPENDS rospy std_msgs message_runtime
+  CATKIN_DEPENDS rospy interactive_markers visualization_msgs geometry_msgs move_base_msgs darknet_ros_msgs std_msgs cv_bridge robutler_picture_saver_23_24 object_spawner_23_24
 #  DEPENDS system_lib
 )
 
@@ -115,7 +123,7 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
+  # include /home/nemo/ros_psr_ws/src
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -158,10 +166,9 @@ include_directories(
 
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
-# catkin_install_python(PROGRAMS
-#   ../perception_robutler/src/take_picture.py
-#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+catkin_install_python(PROGRAMS scripts/mission_manager.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 # install(PROGRAMS
 #   ../perception_robutler/src/take_picture.py

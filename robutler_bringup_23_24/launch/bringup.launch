@@ -18,7 +18,7 @@
 
     <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-urdf -model robutler -x $(arg x_pos) -y $(arg y_pos) -z $(arg z_pos) -Y $(arg Y_pos) -param robot_description" />
 
-    <include file="$(find picture_saver_23_24)/launch/take_picture.launch"/>
+    <include file="$(find robutler_picture_saver_23_24)/launch/take_photo.launch"/>
     <include file="$(find object_spawner_23_24)/launch/object_spawner.launch"/>
 
     
