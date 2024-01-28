@@ -20,7 +20,7 @@ class TakePhotoServer:
         self.save_path = folder_path
 
         self.take_photo_service = rospy.Service(
-            "take_photo", TakePhoto, self.take_photo_callback
+            "/take_photo_server/take_photo", TakePhoto, self.take_photo_callback
         )
 
     def callback(self, data):
@@ -63,7 +63,7 @@ class TakePhotoServer:
 
 
 if __name__ == "__main__":
-    rospy.init_node("take_photo_server", anonymous=False)
+    rospy.init_node("take_photo_server", anonymous=True)
     server = TakePhotoServer()
 
     rospy.spin()  # Keep the node running

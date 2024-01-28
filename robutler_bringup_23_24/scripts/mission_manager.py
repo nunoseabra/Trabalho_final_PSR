@@ -201,7 +201,7 @@ def move_and_find(feedback, location, object, goal_publisher):
 
 
 def take_picture(feedback, take_photo_client):
-    rospy.wait_for_service("take_photo")
+    rospy.wait_for_service("take_photo_server/take_photo")
     try:
         response = take_photo_client()
         rospy.logwarn(response)
@@ -276,12 +276,6 @@ def spawn_move_to(
     if any([bool(random.getrandbits(1)) for _ in range(3)]):
         rospy.loginfo(f"Spawning object ({sp_object}) in the {division}")
 
-        # req = SpawnObject()
-        # req.division = division
-        # req.object_name = sp_object
-        # req.object_size = object_size
-        # rospy.loginfo(req)
-
         try:
             resp = spawn_object_client(
                 division=division, object_name=sp_object, object_size=object_size
@@ -292,7 +286,6 @@ def spawn_move_to(
                 % resp.object_namespace
             )
         except rospy.ServiceException as e:
-            rospy.loginfo("IT WAS HEERE MFKR")
             rospy.logerr("Service call failed: %s" % e)
     else:
         rospy.loginfo(f"It will not spawn the object ({sp_object}) in {division}")
@@ -322,7 +315,7 @@ def main():
     goal_publisher = rospy.Publisher("/move_base_simple/goal", PoseStamped)
     spawn_object_client = rospy.ServiceProxy("spawner/spawn_object", SpawnObject)
     delete_object_client = rospy.ServiceProxy("spawner/delete_object", DeleteObject)
-    take_photo_client = rospy.ServiceProxy("take_photo_server", TakePhoto)
+    take_photo_client = rospy.ServiceProxy("take_photo_server/take_photo", TakePhoto)
 
     server = InteractiveMarkerServer("mission")
     print(server)
