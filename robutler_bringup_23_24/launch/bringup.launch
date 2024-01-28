@@ -5,12 +5,22 @@
     <arg name="y_pos" default="0.109834"/>
     <arg name="z_pos" default="0.0"/>
     <arg name="Y_pos" default="1.57"/>
-    
+    <arg name="use_gui" default="false" />
     <arg name="use_navigation" default="true"/>
     <arg name="use_yolo" default="true"/>
     <arg name="update_map_dict" default="false"/>
 
-    <param name="robot_description" command="$(find xacro)/xacro $(find robutler_description_23_24)/urdf/robutler.urdf.xacro" />
+    <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find robutler_description_23_24 )/urdf/turtlebot3_manipulation_robot.urdf.xacro'"/>
+
+    <!-- start joint state publisher -->
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher">
+        <param name="/use_gui" value="$(arg use_gui)"/>
+        <rosparam param="source_list">["/joint_states"]</rosparam>
+    </node>
+    
+
+    <include file="$(find turtlebot3_manipulation_moveit_config)/launch/move_group.launch"/>
+    
 
     <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen"/>
 
