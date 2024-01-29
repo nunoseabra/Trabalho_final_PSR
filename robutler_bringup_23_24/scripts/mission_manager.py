@@ -33,7 +33,7 @@ rospack = rospkg.RosPack()
 
 count_obj = 0
 active_objects = []
-
+current_object = []
 #  -------------------------HANDLER------------------------------------------------
 
 
@@ -176,7 +176,9 @@ def take_picture(feedback, take_photo_client):
 def update_objs_Class(msg):
     global count_obj, current_object
     objs_Class = msg.data.split(", ")
-    count_obj = objs_Class.count(current_object)
+    rospy.loginfo(msg.data)
+    count_obj += objs_Class.count(current_object)
+    rospy.loginfo(f"For a total of {count_obj} {current_object} found")
 
 
 def check(feedback, location, object, goal_publisher):
@@ -191,11 +193,8 @@ def find_in_house(feedback, object, goal_publisher):
 
 
 def delete_objs(feedback, object_ns, delete_object_client):
-    req = DeleteObject()
-    req.object_ns = object_ns
-
     try:
-        resp = delete_object_client(req)
+        resp = delete_object_client(object_ns)
         rospy.loginfo("Object {object_ns} deleted")
     except rospy.ServiceException as e:
         rospy.logerr("Service call failed: %s" % e)
@@ -212,11 +211,14 @@ def spawn_move_to_find(
     detection_control_publisher,
     num_finds=1,
 ):
-    global active_objects, robutler_loc_dict, count_obj
+    global active_objects, robutler_loc_dict, count_obj, current_object
     # Delete all active objects that where spawned by SPAWNER
+    current_object = sp_object
     for object_ns in active_objects:
-        partial(
-            delete_objs, object_ns=object_ns, delete_object_client=delete_object_client
+        delete_objs(
+            feedback=feedback,
+            object_ns=object_ns,
+            delete_object_client=delete_object_client,
         )
         rospy.logwarn("TESTS")
 
@@ -240,14 +242,14 @@ def spawn_move_to_find(
             rospy.loginfo(f"It will not spawn the object ({sp_object}) in {division}")
 
     # Tell to move to next section in the desired Division
-        #TODO: Maybe change the detection to as soon as detects stop the search
+    # TODO: Maybe change the detection to as soon as detects stop the search
     for index, (section_name, section_data) in enumerate(
         robutler_loc_dict[division].items()
     ):
         if index > 0:
             control_msg = DetectionControl()
             control_msg.enable_reading = True
-            control_msg.percentage_threshold = 0.85
+            control_msg.percentage_threshold = 0.70
             detection_control_publisher.publish(control_msg)
 
         moveTo(feedback, section_name, goal_publisher)
@@ -266,8 +268,8 @@ def spawn_move_to_find(
                 rospy.loginfo(f"There is still {sp_object} to find in {division}")
 
 
-
 #  -------------------------MAIN------------------------------------------------
+
 
 # TODO: change dictionary to also be a different pkg of mgs Division_Section_Coords
 def main():
