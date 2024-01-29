@@ -30,11 +30,11 @@ robutler_loc_dict = {}
 h_first_entry = 0
 h_mode_last = 0
 rospack = rospkg.RosPack()
-found_object_listener = None
-objs_Percent = []
-objs_Class = []
+
 count_obj = 0
 active_objects = []
+
+#  -------------------------HANDLER------------------------------------------------
 
 
 def enableCb(feedback):
@@ -119,6 +119,9 @@ def deepCb(feedback):
     rospy.loginfo("The deep sub-menu has been found.")
 
 
+#  -------------------------MOVEMENT------------------------------------------------
+
+
 def moveTo(feedback, location, goal_publisher):
     global robutler_loc_dict
     rospy.loginfo(f"Called moving to {location}")
@@ -153,42 +156,7 @@ def moveTo(feedback, location, goal_publisher):
     rospy.loginfo(f"Target Location ({location}) Reached")
 
 
-def listening_to_objects(msg):
-    global found_object_listener, objs_Percent, objs_Class
-    rospy.loginfo("Darknet message received!")
-    objs_Class = []
-    objs_Percent = []
-
-    for bbox in msg.bounding_boxes:
-        objs_Class.append(bbox.Class)
-        objs_Percent.append(bbox.probability)
-
-    found_object_listener.unregister()
-    rospy.loginfo("Bounding Boxes subscriber unregistered")
-    # found_object_listener = False
-
-
-def move_and_find(
-    feedback, location, object, goal_publisher, detection_control_publisher
-):
-    global found_object_listener, objs_Class, objs_Percent, count_obj
-
-    control_msg = DetectionControl()
-    control_msg.enable_reading = True
-    control_msg.percentage_threshold = 0.75
-    detection_control_publisher.publish(control_msg)
-
-    moveTo(feedback, location, goal_publisher)
-    rospy.loginfo(f"Finding {object} in the {location}")
-
-    control_msg.enable_reading = False
-    detection_control_publisher.publish(control_msg)
-
-    count_obj = objs_Class.count(object)
-
-    rospy.loginfo(
-        f"Robutler found ({count_obj}) ({object}), with a certainty above 50%."
-    )
+#  -------------------------PICTURE------------------------------------------------
 
 
 def take_picture(feedback, take_photo_client):
@@ -202,39 +170,24 @@ def take_picture(feedback, take_photo_client):
         rospy.logwarn("Service call failed: %s" % e)
 
 
+#  -------------------------DETECTION------------------------------------------------
+
+
+def update_objs_Class(msg):
+    global count_obj, current_object
+    objs_Class = msg.data.split(", ")
+    count_obj = objs_Class.count(current_object)
+
+
 def check(feedback, location, object, goal_publisher):
-    global objs_Class, objs_Percent
-    spawn_move_to(feedback, location, object, goal_publisher)
-    for index_objs, obj_Class in enumerate(objs_Class):
-        rospy.loginfo(f"{obj_Class}")
-        # TODO: ADD to check if inside the area of bounding_boxes there is another obj
-        if str(obj_Class) != "diningtable" or str(obj_Class) != "chair":
-            rospy.loginfo(
-                f"The table is not cleared, with a certainty of {objs_Percent[index_objs]}%"
-            )
-            break
-        else:
-            rospy.loginfo("The table is cleared")
+    return None
 
 
 def find_in_house(feedback, object, goal_publisher):
-    global found_object_listener, count_obj, robutler_loc_dict
-    total_objs = 0
-    for division_name, division_data in robutler_loc_dict.items():
-        rospy.loginfo(f"Going to Division: {division_name}")
-        for section_name, section_data in division_data.items():
-            coords = section_data.get("Coords")
-            rospy.loginfo(f"Going to Section: {section_name}")
-            if coords:
-                move_and_find(
-                    feedback=feedback,
-                    location=division_name,
-                    object=object,
-                    goal_publisher=goal_publisher,
-                )
+    return None
 
-            total_objs += count_obj
-    rospy.loginfo(f"Robutler found {total_objs} {object} in the house")
+
+#  -------------------------SPAWNER------------------------------------------------
 
 
 def delete_objs(feedback, object_ns, delete_object_client):
@@ -248,8 +201,7 @@ def delete_objs(feedback, object_ns, delete_object_client):
         rospy.logerr("Service call failed: %s" % e)
 
 
-# TODO: change the spawn_object to be in it's own package and be a node with pub(obj id) and sub(comand) communication with mission_manager
-def spawn_move_to(
+def spawn_move_to_find(
     feedback,
     division,
     sp_object,
@@ -258,47 +210,62 @@ def spawn_move_to(
     spawn_object_client,
     delete_object_client,
     detection_control_publisher,
+    num_finds,
 ):
     global active_objects, robutler_loc_dict, count_obj
+
     for object_ns in active_objects:
         partial(
             delete_objs, object_ns=object_ns, delete_object_client=delete_object_client
         )
+        rospy.logwarn("TESTS")
 
-    if any([bool(random.getrandbits(1)) for _ in range(3)]):
-        rospy.loginfo(f"Spawning object ({sp_object}) in the {division}")
+    random_num_finds = random.randint(1, num_finds)
+    for _ in range(random_num_finds):
+        if any(random.getrandbits(1) for _ in range(3)):
+            rospy.loginfo(f"Spawning object ({sp_object}) in the {division}")
 
-        try:
-            resp = spawn_object_client(
-                division=division, object_name=sp_object, object_size=object_size
-            )
-            active_objects.append(resp.object_namespace)
-            rospy.loginfo(
-                "Object spawned in {division}, robot namespace: %s"
-                % resp.object_namespace
-            )
-        except rospy.ServiceException as e:
-            rospy.logerr("Service call failed: %s" % e)
-    else:
-        rospy.loginfo(f"It will not spawn the object ({sp_object}) in {division}")
+            try:
+                resp = spawn_object_client(
+                    division=division, object_name=sp_object, object_size=object_size
+                )
+                active_objects.append(resp.object_namespace)
+                rospy.loginfo(
+                    "Object spawned in {division}, robot namespace: %s"
+                    % resp.object_namespace
+                )
+            except rospy.ServiceException as e:
+                rospy.logerr("Service call failed: %s" % e)
+        else:
+            rospy.loginfo(f"It will not spawn the object ({sp_object}) in {division}")
 
-    for section_name, section_data in robutler_loc_dict[division].items():
-        move_and_find(
-            feedback=feedback,
-            location=section_name,
-            object=sp_object,
-            goal_publisher=goal_publisher,
-            detection_control_publisher=detection_control_publisher,
-        )
-        if count_obj >= 1:
-            rospy.loginfo(f"Robutler found {sp_object} in {division} {section_name}")
+    for index, (section_name, section_data) in enumerate(
+        robutler_loc_dict[division].items()
+    ):
+        if index > 0:
+            control_msg = DetectionControl()
+            control_msg.enable_reading = True
+            control_msg.percentage_threshold = 0.85
+            detection_control_publisher.publish(control_msg)
+
+        moveTo(feedback, section_name, goal_publisher)
+
+        if index > 0:
+            control_msg.enable_reading = False
+            detection_control_publisher.publish(control_msg)
+
+        if count_obj >= random_num_finds:
+            rospy.loginfo(f"Robutler found {sp_object} in {division}")
             break
+        else:
+            if index == len(robutler_loc_dict[division].items() - 1):
+                rospy.loginfo(f"Robutler didn't find all the {sp_object} in {division}")
+            else:
+                rospy.loginfo(f"There is still {sp_object} to find in {division}")
 
 
-def update_objs_Class(msg):
-    global objs_Class
-    objs_Class = msg.data.split(", ")
 
+#  -------------------------MAIN------------------------------------------------
 
 # TODO: change dictionary to also be a different pkg of mgs Division_Section_Coords
 def main():
@@ -320,8 +287,6 @@ def main():
     detection_control_publisher = rospy.Publisher(
         "/mission_manager/detection_control", DetectionControl, queue_size=10
     )
-    enable_reading = False
-    percentage_threshold = 0.5
 
     server = InteractiveMarkerServer("mission")
     print(server)
@@ -356,7 +321,7 @@ def main():
                 division_name,
                 parent=h_find_obj_entry,
                 callback=partial(
-                    spawn_move_to,
+                    spawn_move_to_find,
                     spawn_object_client=spawn_object_client,
                     delete_object_client=delete_object_client,
                     division=division_name,
