@@ -72,6 +72,7 @@ class ObjectSpawner:
         division = req.division
         object_name = req.object_name.lower()
         object_size = req.object_size
+        location = req.location
 
         if division not in self.divisions:
             rospy.logerr(
@@ -85,17 +86,26 @@ class ObjectSpawner:
                 f"Object '{object_name}' is unknown. Available objects are {list(object_names)}"
             )
             return
-
         temp_sections = self.divisions[division]
-        valid_sections = []
-        if object_size == "Big":
-            for section_name, section_data in temp_sections.items():
-                if "Size" in section_data and section_data["Size"] == object_size:
-                    valid_sections.append(section_name)
+        if location == " ":
+            valid_sections = []
+            if object_size == "Big":
+                for section_name, section_data in temp_sections.items():
+                    if "Size" in section_data and section_data["Size"] == object_size:
+                        valid_sections.append(section_name)
+            else:
+                valid_sections = list(temp_sections.keys())
+            random_sec = random.choice(valid_sections)
+            random_sec_coords = temp_sections.get(random_sec, {}).get("Coords", [])
         else:
-            valid_sections = list(temp_sections.keys())
-        random_sec = random.choice(valid_sections)
-        random_sec_coords = temp_sections.get(random_sec, {}).get("Coords", [])
+            if location in temp_sections:
+                random_sec_coords = temp_sections[location].get("Coords", [])
+            else:
+                rospy.logerr(
+                    f"Location '{location}' is unknown in division '{division}'. Available locations are {list(temp_sections.keys())}"
+                )
+                return
+
         (x, y, z, roll, pitch, yaw) = random_sec_coords
 
         pose = Pose()

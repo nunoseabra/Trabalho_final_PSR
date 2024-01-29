@@ -9,28 +9,32 @@ import rospkg
 from geometry_msgs.msg import Pose, Point, Quaternion, PoseStamped
 from tf.transformations import quaternion_from_euler
 from move_base_msgs.msg import MoveBaseActionResult
-from darknet_ros_msgs.msg import BoundingBoxes
 import time
-import pandas as pd
 import json
-
+from actionlib_msgs.msg import GoalID
 from object_spawner_23_24.srv import SpawnObject, DeleteObject
 from robutler_picture_saver_23_24.srv import TakePhoto
 
-from std_msgs.msg import String, Bool
+from std_msgs.msg import String
 from robutler_bringup_23_24.msg import DetectionControl
 
 import random
 
+goal_publisher = None
+spawn_object_client = None
+delete_object_client = None
+detection_control_publisher = None
 server = None
 marker_pos = 1
-
+flag_still_moving = False
+flag_interrupt = False
 menu_handler = MenuHandler()
 robutler_loc_dict = {}
 h_first_entry = 0
 h_mode_last = 0
 rospack = rospkg.RosPack()
 
+objs_Class = []
 count_obj = 0
 active_objects = []
 current_object = []
@@ -122,8 +126,8 @@ def deepCb(feedback):
 #  -------------------------MOVEMENT------------------------------------------------
 
 
-def moveTo(feedback, location, goal_publisher):
-    global robutler_loc_dict
+def moveTo(feedback, location):
+    global robutler_loc_dict, flag_still_moving, goal_publisher
     rospy.loginfo(f"Called moving to {location}")
 
     for division_name, division_data in robutler_loc_dict.items():
@@ -148,12 +152,12 @@ def moveTo(feedback, location, goal_publisher):
 
     rospy.loginfo(f"Sending Goal move to {location}")
     goal_publisher.publish(ps)
-
-    rospy.wait_for_message("/move_base/result", MoveBaseActionResult)
+    flag_still_moving = True
+    # rospy.wait_for_message("/move_base/result", MoveBaseActionResult)
     # rospy.loginfo(result_msg.status.status)
     # TODO: change this While to maybe threads, One do the main while the others triggers a flag when result_msg.status.status value = 3
     #                                                                           or lissens to MoveBaseActionStatus  status_msg.status.status = 3
-    rospy.loginfo(f"Target Location ({location}) Reached")
+    # rospy.loginfo(f"Target Location ({location}) Reached")
 
 
 #  -------------------------PICTURE------------------------------------------------
@@ -174,25 +178,52 @@ def take_picture(feedback, take_photo_client):
 
 
 def update_objs_Class(msg):
-    global count_obj, current_object
+    global count_obj, current_object, objs_Class
     objs_Class = msg.data.split(", ")
     rospy.loginfo(msg.data)
     count_obj += objs_Class.count(current_object)
     rospy.loginfo(f"For a total of {count_obj} {current_object} found")
 
 
-def check(feedback, location, object, goal_publisher):
-    return None
+def check(feedback, location, division, object, num_finds):
+    spawn_move_to_find(
+        feedback,
+        division=division,
+        sp_object=object,
+        object_size="Small",
+        num_finds=num_finds,
+        location=location,
+    )
+    if any(obj != "dinnertable" and obj != "chair" for obj in objs_Class):
+        rospy.loginfo("The table is not cleared!")
+    else:
+        rospy.loginfo("The table is cleared!")
 
 
-def find_in_house(feedback, object, goal_publisher):
-    return None
+def find_in_house(feedback, object, object_size):
+    global robutler_loc_dict, count_obj
+    percentage = 0.85
+    for division_name, division_data in robutler_loc_dict.items():
+        spawn_move_to_find(
+            feedback=feedback,
+            division=division_name,
+            sp_object=object,
+            object_size=object_size,
+            deletion=False,
+            num=1,
+            percentage=percentage,
+        )
+        if count_obj > 1:
+            rospy.loginfo(f"There is SOMEONE HOME!!!!!(certanty of {percentage*100}%)")
+        else:
+            rospy.loginfo(f"Robutler didn't find anyone")
 
 
 #  -------------------------SPAWNER------------------------------------------------
 
 
-def delete_objs(feedback, object_ns, delete_object_client):
+def delete_objs(feedback, object_ns):
+    global delete_object_client
     try:
         resp = delete_object_client(object_ns)
         rospy.loginfo("Object {object_ns} deleted")
@@ -205,30 +236,34 @@ def spawn_move_to_find(
     division,
     sp_object,
     object_size,
-    goal_publisher,
-    spawn_object_client,
-    delete_object_client,
-    detection_control_publisher,
     num_finds=1,
+    location=" ",
+    check=False,
+    deletion=True,
+    num=4,
+    percentage=0.75,
 ):
-    global active_objects, robutler_loc_dict, count_obj, current_object
+    global active_objects, robutler_loc_dict, count_obj, current_object, flag_still_moving, flag_interrupt, goal_publisher, spawn_object_client, detection_control_publisher
     # Delete all active objects that where spawned by SPAWNER
     current_object = sp_object
-    for object_ns in active_objects:
-        delete_objs(
-            feedback=feedback,
-            object_ns=object_ns,
-            delete_object_client=delete_object_client,
-        )
-
+    if deletion:
+        for object_ns in active_objects:
+            delete_objs(
+                feedback=feedback,
+                object_ns=object_ns,
+            )
+    flag_interrupt = False
     # Spawn new objects
     random_num_finds = random.randint(1, num_finds)
     for _ in range(random_num_finds):
-        if any(random.getrandbits(1) for _ in range(3)):
+        if any(random.getrandbits(1) for _ in range(num)):
             rospy.loginfo(f"Spawning object ({sp_object}) in the {division}")
             try:
                 resp = spawn_object_client(
-                    division=division, object_name=sp_object, object_size=object_size
+                    division=division,
+                    object_name=sp_object,
+                    object_size=object_size,
+                    location=location,
                 )
                 active_objects.append(resp.object_namespace)
                 rospy.loginfo(
@@ -239,34 +274,76 @@ def spawn_move_to_find(
                 rospy.logerr("Service call failed: %s" % e)
         else:
             rospy.loginfo(f"It will not spawn the object ({sp_object}) in {division}")
+    if location == " ":
+        for index, (section_name, section_data) in enumerate(
+            robutler_loc_dict[division].items()
+        ):
+            if index > 0:
+                control_msg = DetectionControl()
+                control_msg.enable_reading = True
+                control_msg.percentage_threshold = percentage
+                detection_control_publisher.publish(control_msg)
 
-    # Tell to move to next section in the desired Division
-    # TODO: Maybe change the detection to as soon as detects stop the search
-    for index, (section_name, section_data) in enumerate(
-        robutler_loc_dict[division].items()
-    ):
-        if index > 0:
-            control_msg = DetectionControl()
-            control_msg.enable_reading = True
-            control_msg.percentage_threshold = 0.70
-            detection_control_publisher.publish(control_msg)
+            moveTo(feedback, section_name, goal_publisher)
+            while flag_still_moving:
+                if flag_interrupt:
+                    rospy.loginfo(f"Goals interrupted!")
+                    return
+                time.sleep(0.5)
+            rospy.loginfo(f"Target Location Reached")
+            time.sleep(2)
 
-        moveTo(feedback, section_name, goal_publisher)
+            if index > 0:
+                control_msg.enable_reading = False
+                detection_control_publisher.publish(control_msg)
 
-        time.sleep(2)
-
-        if index > 0:
-            control_msg.enable_reading = False
-            detection_control_publisher.publish(control_msg)
-
-        if count_obj >= random_num_finds:
-            rospy.loginfo(f"Robutler found {sp_object} in {division}")
-            break
-        else:
-            if index == (len(robutler_loc_dict[division].items()) - 1):
-                rospy.loginfo(f"Robutler didn't find all the {sp_object} in {division}")
+            if count_obj >= random_num_finds:
+                rospy.loginfo(
+                    f"Robutler found {sp_object} in {division}, with a certainty above {percentage}"
+                )
+                break
             else:
-                rospy.loginfo(f"There is still {sp_object} to find in {division}")
+                if index == (len(robutler_loc_dict[division].items()) - 1):
+                    rospy.loginfo(
+                        f"Robutler didn't find all the {sp_object} in {division}"
+                    )
+                else:
+                    rospy.loginfo(f"There is still {sp_object} to find in {division}")
+    else:
+        moveTo(feedback, location, goal_publisher)
+        while flag_still_moving:
+            time.sleep(0.5)
+        rospy.loginfo(f"Target Location Reached")
+        control_msg = DetectionControl()
+        control_msg.enable_reading = True
+        control_msg.percentage_threshold = percentage
+        detection_control_publisher.publish(control_msg)
+        time.sleep(4)
+        control_msg.enable_reading = False
+        detection_control_publisher.publish(control_msg)
+        if not check:
+            if count_obj >= random_num_finds:
+                rospy.loginfo(
+                    f"Robutler found {sp_object} in a certainty above {percentage}"
+                )
+            else:
+                rospy.loginfo(f"Robutler didn't find {sp_object}")
+        else:
+            return
+
+
+def interruption(feedback, cancel_pub):
+    global flag_interrupt
+    rospy.loginfo("Cancelling the current goals...")
+    cancel_msg = GoalID()
+    cancel_pub.publish(cancel_msg)
+    rospy.loginfo("Goals Cancelled")
+    flag_interrupt = True
+
+
+def sign_of_arrival(msg):
+    global flag_still_moving
+    flag_still_moving = False
 
 
 #  -------------------------MAIN------------------------------------------------
@@ -274,7 +351,7 @@ def spawn_move_to_find(
 
 # TODO: change dictionary to also be a different pkg of mgs Division_Section_Coords
 def main():
-    global server, h_first_entry, h_mode_last, robutler_loc_dict
+    global server, h_first_entry, h_mode_last, robutler_loc_dict, goal_publisher, spawn_object_client, delete_object_client, detection_control_publisher
 
     # -------------------------------
     # Initialization
@@ -293,6 +370,10 @@ def main():
     )
     detection_control_publisher = rospy.Publisher(
         "/mission_manager/detection_control", DetectionControl, queue_size=10
+    )
+    cancel_pub = rospy.Publisher("/move_base/cancel", GoalID, queue_size=3)
+    arrival_sub = rospy.Subscriber(
+        "/move_base/result", MoveBaseActionResult, sign_of_arrival
     )
 
     server = InteractiveMarkerServer("mission")
@@ -329,13 +410,9 @@ def main():
                 parent=h_find_obj_entry,
                 callback=partial(
                     spawn_move_to_find,
-                    spawn_object_client=spawn_object_client,
-                    delete_object_client=delete_object_client,
                     division=division_name,
                     object_size=object_sizes[index_object],
                     sp_object=spawn_obj,
-                    goal_publisher=goal_publisher,
-                    detection_control_publisher=detection_control_publisher,
                 ),
             )
 
@@ -346,57 +423,65 @@ def main():
 
     # --------------------------------------------------------------------------------------------------------------------
 
-    # h_fourth_entry = menu_handler.insert("Check if")
+    h_fourth_entry = menu_handler.insert("Check if")
 
-    # entry = menu_handler.insert(
-    #     "Pc is on the table",
-    #     parent=h_fourth_entry,
-    #     callback=partial(
-    #         move_and_find,
-    #         location="bed_table_on_top",
-    #         object="pc",
-    #         goal_publisher=goal_publisher,
-    #     ),
-    # )
+    entry = menu_handler.insert(
+        "Pc is on the table",
+        parent=h_fourth_entry,
+        callback=partial(
+            spawn_move_to_find,
+            division="bedroom",
+            object_size="Small",
+            sp_object="laptop",
+            location="bed_table_on_top",
+        ),
+    )
 
-    # entry = menu_handler.insert(
-    #     "Can of coke is on the table",
-    #     parent=h_fourth_entry,
-    #     callback=partial(
-    #         move_and_find,
-    #         location="top_dining_table",
-    #         object="can_coke",
-    #         goal_publisher=goal_publisher,
-    #     ),
-    # )
+    entry = menu_handler.insert(
+        "Bootle of wine is on the table",
+        parent=h_fourth_entry,
+        callback=partial(
+            spawn_move_to_find,
+            division="dining_room",
+            object_size="Small",
+            sp_object="bottle",
+            location="top_dining_table",
+        ),
+    )
 
-    # entry = menu_handler.insert(
-    #     "Bootle of wine is on the table",
-    #     parent=h_fourth_entry,
-    #     callback=partial(
-    #         move_and_find,
-    #         location="top_dining_table",
-    #         object="bottle",
-    #         goal_publisher=goal_publisher,
-    #     ),
-    # )
+    entry = menu_handler.insert(
+        "See if the stove is on",
+        parent=h_fourth_entry,
+        callback=partial(
+            spawn_move_to_find,
+            division="kitchen",
+            object_size="Small",
+            sp_object="sphere",
+            location="stove",
+        ),
+    )
 
-    # entry = menu_handler.insert(
-    #     "Diner table is cleared",
-    #     parent=h_fourth_entry,
-    #     callback=partial(
-    #         check,
-    #         location="top_dining_table",
-    #         object="diningtable",
-    #         goal_publisher=goal_publisher,
-    #     ),
-    # )
-    # entry = menu_handler.insert(
-    #     "Is someone home",
-    #     parent=h_fourth_entry,
-    #     callback=partial(find_in_house, object="person", goal_publisher=goal_publisher),
-    # )
+    entry = menu_handler.insert(
+        "Diner table is cleared",
+        parent=h_fourth_entry,
+        callback=partial(
+            check,
+            location="top_dining_table",
+            division="kitchen",
+            object="bottle",
+            num_finds=3,
+        ),
+    )
+    entry = menu_handler.insert(
+        "Is someone home",
+        parent=h_fourth_entry,
+        callback=partial(find_in_house, object="person", object_size="Big"),
+    )
 
+    h_interrupt_entry = menu_handler.insert(
+        "STOP",
+        callback=partial(interruption, cancel_pub=cancel_pub),
+    )
     makeMenuMarker("marker1")
 
     menu_handler.apply(server, "marker1")

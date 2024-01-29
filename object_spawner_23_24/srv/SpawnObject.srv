@@ -2,6 +2,7 @@
 string division
 string object_name
 string object_size
+string location
 
 # Response
 ---
