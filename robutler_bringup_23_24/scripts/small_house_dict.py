@@ -18,6 +18,7 @@ def robot_dictionary():
     rob_gym_sections = {
         "gym_table": {"Coords": [-0.390597, 1.749288, 1.622612]},
         "gym_exercise_area": {"Coords": [1.622612, 2.222902, 0.471165]},
+        
     }
 
     rob_living_room_sections = {
@@ -98,7 +99,11 @@ def object_dictionary():
             "Size": "Small",
         },
         "gym_exercise_area": {
-            "Coords": [4.006518, 4.809416, 0.066231, 0.000018, -0.000046, 3.134037],
+            "Coords": [0.820781, 2.464618,  -0.001019, 0.000018, -0.000046, 1.013780],
+            "Size": "Big",
+        },
+        "gym_exercise_bench": {
+            "Coords": [2.900877, 3.111663, 0.407947, 0.000018, -0.000046, 3.134037],
             "Size": "Big",
         },
     }
