@@ -32,7 +32,7 @@
     <node pkg="robutler_bringup_23_24" type="mission_manager.py" name="mission_manager" output="screen"/>
     
     <group if="$(arg use_yolo)">
-        <include file="$(find darknet_ros)/launch/darknet_ros.launch">
+        <include file="$(find robutler_detection_23_24)/launch/detection.launch">
             <arg name="image" value="/camera2/rgb/image_raw2"/>
         </include>
     </group>

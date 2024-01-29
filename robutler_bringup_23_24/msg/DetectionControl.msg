@@ -1,0 +1,2 @@
+bool enable_reading
+float32 percentage_threshold

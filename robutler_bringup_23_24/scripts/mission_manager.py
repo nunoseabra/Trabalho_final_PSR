@@ -10,7 +10,6 @@ from geometry_msgs.msg import Pose, Point, Quaternion, PoseStamped
 from tf.transformations import quaternion_from_euler
 from move_base_msgs.msg import MoveBaseActionResult
 from darknet_ros_msgs.msg import BoundingBoxes
-import cv2
 import time
 import pandas as pd
 import json
@@ -18,7 +17,9 @@ import json
 from object_spawner_23_24.srv import SpawnObject, DeleteObject
 from robutler_picture_saver_23_24.srv import TakePhoto
 
-import os
+from std_msgs.msg import String, Bool
+from robutler_bringup_23_24.msg import DetectionControl
+
 import random
 
 server = None
@@ -167,33 +168,23 @@ def listening_to_objects(msg):
     # found_object_listener = False
 
 
-def move_and_find(feedback, location, object, goal_publisher):
+def move_and_find(
+    feedback, location, object, goal_publisher, detection_control_publisher
+):
     global found_object_listener, objs_Class, objs_Percent, count_obj
+
+    control_msg = DetectionControl()
+    control_msg.enable_reading = True
+    control_msg.percentage_threshold = 0.75
+    detection_control_publisher.publish(control_msg)
 
     moveTo(feedback, location, goal_publisher)
     rospy.loginfo(f"Finding {object} in the {location}")
-    rospy.loginfo("Creating Bounding Boxes subscriber...")
-    time.sleep(2)  # Do to the delay betweeen movement and darknet image aquisition
-    found_object_listener = rospy.Subscriber(
-        "/darknet_ros/bounding_boxes", BoundingBoxes, listening_to_objects
-    )
-    timer = 0
-    try:
-        while found_object_listener.get_num_connections() >= 0:
-            time.sleep(0.5)
-            timer += 0.5
-            if timer > 2:
-                rospy.logwarn(
-                    f"Darknet didn't detect any object here or Darknet is off"
-                )
-                break
-    except:
-        rospy.loginfo(f"Robutler has found: {objs_Class} - {objs_Percent}")
 
-    received_data = {"Objects": objs_Class, "Percentage": objs_Percent}
-    df = pd.DataFrame(received_data)
-    # TODO: this needs to be fixed so that Objects from yolo and Objects from models/ have the same name
-    count_obj = (df["Objects"][df["Percentage"] > 0.5] == object).sum()
+    control_msg.enable_reading = False
+    detection_control_publisher.publish(control_msg)
+
+    count_obj = objs_Class.count(object)
 
     rospy.loginfo(
         f"Robutler found ({count_obj}) ({object}), with a certainty above 50%."
@@ -266,6 +257,7 @@ def spawn_move_to(
     goal_publisher,
     spawn_object_client,
     delete_object_client,
+    detection_control_publisher,
 ):
     global active_objects, robutler_loc_dict, count_obj
     for object_ns in active_objects:
@@ -296,10 +288,16 @@ def spawn_move_to(
             location=section_name,
             object=sp_object,
             goal_publisher=goal_publisher,
+            detection_control_publisher=detection_control_publisher,
         )
         if count_obj >= 1:
             rospy.loginfo(f"Robutler found {sp_object} in {division} {section_name}")
             break
+
+
+def update_objs_Class(msg):
+    global objs_Class
+    objs_Class = msg.data.split(", ")
 
 
 # TODO: change dictionary to also be a different pkg of mgs Division_Section_Coords
@@ -316,6 +314,14 @@ def main():
     spawn_object_client = rospy.ServiceProxy("spawner/spawn_object", SpawnObject)
     delete_object_client = rospy.ServiceProxy("spawner/delete_object", DeleteObject)
     take_photo_client = rospy.ServiceProxy("take_photo_server/take_photo", TakePhoto)
+    detected_objects_subscriber = rospy.Subscriber(
+        "/mission_manager/detected_objects", String, update_objs_Class
+    )
+    detection_control_publisher = rospy.Publisher(
+        "/mission_manager/detection_control", DetectionControl, queue_size=10
+    )
+    enable_reading = False
+    percentage_threshold = 0.5
 
     server = InteractiveMarkerServer("mission")
     print(server)
@@ -357,6 +363,7 @@ def main():
                     object_size=object_sizes[index_object],
                     sp_object=spawn_obj,
                     goal_publisher=goal_publisher,
+                    detection_control_publisher=detection_control_publisher,
                 ),
             )
 
