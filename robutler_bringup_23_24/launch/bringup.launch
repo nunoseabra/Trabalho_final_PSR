@@ -10,20 +10,10 @@
     <arg name="use_yolo" default="true"/>
     <arg name="update_map_dict" default="false"/>
 
-    <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find robutler_description_23_24 )/urdf/turtlebot3_manipulation_robot.urdf.xacro'"/>
 
-    <!-- start joint state publisher -->
-    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher">
-        <param name="/use_gui" value="$(arg use_gui)"/>
-        <rosparam param="source_list">["/joint_states"]</rosparam>
-    </node>
-    
-
-    <include file="$(find turtlebot3_manipulation_moveit_config)/launch/move_group.launch"/>
-    
-
-    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen"/>
-
+    <include file="$(find robutler_description_23_24)/launch/manipulation_view.launch">
+        <arg name="open_rviz" value="false"/>
+    </include>
     <node pkg="rviz" type="rviz" name="rviz" output="screen" args="-d $(find robutler_bringup_23_24)/config/rviz.rviz"/>
 
     <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-urdf -model robutler -x $(arg x_pos) -y $(arg y_pos) -z $(arg z_pos) -Y $(arg Y_pos) -param robot_description" />

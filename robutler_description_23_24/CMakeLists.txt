@@ -10,7 +10,10 @@ project(robutler_description_23_24)
 find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
+  joint_state_publisher
+  robot_state_publisher
 )
+
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -104,7 +107,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES robutler_description_23_24
-#  CATKIN_DEPENDS rospy std_msgs
+ CATKIN_DEPENDS rospy std_msgs joint_state_publisher robot_state_publisher
 #  DEPENDS system_lib
 )
 

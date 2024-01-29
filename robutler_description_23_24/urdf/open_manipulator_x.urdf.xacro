@@ -2,17 +2,17 @@
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
 
   <!-- Include OpenManipulator Gazebo Parameter -->
-  <xacro:include filename="$(find turtlebot3_manipulation_description)/urdf/open_manipulator_x.gazebo.xacro"/>
+  <xacro:include filename="$(find robutler_description_23_24)/urdf/open_manipulator_x.gazebo.xacro"/>
 
   <!-- Include OpenManipulator Transmission -->
-  <xacro:include filename="$(find turtlebot3_manipulation_description)/urdf/open_manipulator_x.transmission.xacro"/>
+  <xacro:include filename="$(find robutler_description_23_24)/urdf/open_manipulator_x.transmission.xacro"/>
 
   <!-- Link 1 -->
   <link name="link1">
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://turtlebot3_manipulation_description/meshes/chain_link1.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="package://robutler_description_23_24/meshes/chain_link1.stl" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="grey"/>
     </visual>
@@ -20,7 +20,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://turtlebot3_manipulation_description/meshes/chain_link1.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="package://robutler_description_23_24/meshes/chain_link1.stl" scale="0.001 0.001 0.001"/>
       </geometry>
     </collision>
 
@@ -47,7 +47,7 @@
     <visual>
       <origin xyz="0 0 0.018" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://turtlebot3_manipulation_description/meshes/chain_link2.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="package://robutler_description_23_24/meshes/chain_link2.stl" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="grey"/>
     </visual>
@@ -55,7 +55,7 @@
     <collision>
       <origin xyz="0 0 0.018" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://turtlebot3_manipulation_description/meshes/chain_link2.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="package://robutler_description_23_24/meshes/chain_link2.stl" scale="0.001 0.001 0.001"/>
       </geometry>
     </collision>
 
@@ -82,7 +82,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://turtlebot3_manipulation_description/meshes/chain_link3.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="package://robutler_description_23_24/meshes/chain_link3.stl" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="grey"/>
     </visual>
@@ -90,7 +90,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://turtlebot3_manipulation_description/meshes/chain_link3.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="package://robutler_description_23_24/meshes/chain_link3.stl" scale="0.001 0.001 0.001"/>
       </geometry>
     </collision>
 
@@ -117,7 +117,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://turtlebot3_manipulation_description/meshes/chain_link4.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="package://robutler_description_23_24/meshes/chain_link4.stl" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="grey"/>
     </visual>
@@ -125,7 +125,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://turtlebot3_manipulation_description/meshes/chain_link4.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="package://robutler_description_23_24/meshes/chain_link4.stl" scale="0.001 0.001 0.001"/>
       </geometry>
     </collision>
 
@@ -152,7 +152,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://turtlebot3_manipulation_description/meshes/chain_link5.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="package://robutler_description_23_24/meshes/chain_link5.stl" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="grey"/>
     </visual>
@@ -160,7 +160,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://turtlebot3_manipulation_description/meshes/chain_link5.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="package://robutler_description_23_24/meshes/chain_link5.stl" scale="0.001 0.001 0.001"/>
       </geometry>
     </collision>
 
@@ -182,7 +182,7 @@
     <visual>
       <origin xyz="0.0 0.0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://turtlebot3_manipulation_description/meshes/chain_link_grip_l.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="package://robutler_description_23_24/meshes/chain_link_grip_l.stl" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="grey"/>
     </visual>
@@ -190,7 +190,7 @@
     <collision>
       <origin xyz="0.0 0.0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://turtlebot3_manipulation_description/meshes/chain_link_grip_l.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="package://robutler_description_23_24/meshes/chain_link_grip_l.stl" scale="0.001 0.001 0.001"/>
       </geometry>
     </collision>
 
@@ -217,7 +217,7 @@
     <visual>
       <origin xyz="0.0 -0.0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://turtlebot3_manipulation_description/meshes/chain_link_grip_r.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="package://robutler_description_23_24/meshes/chain_link_grip_r.stl" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="grey"/>
     </visual>
@@ -225,7 +225,7 @@
     <collision>
       <origin xyz="0.0 -0.0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://turtlebot3_manipulation_description/meshes/chain_link_grip_r.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="package://robutler_description_23_24/meshes/chain_link_grip_r.stl" scale="0.001 0.001 0.001"/>
       </geometry>
     </collision>
 
