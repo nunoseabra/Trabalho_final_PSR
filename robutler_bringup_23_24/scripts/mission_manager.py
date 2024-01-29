@@ -210,21 +210,21 @@ def spawn_move_to_find(
     spawn_object_client,
     delete_object_client,
     detection_control_publisher,
-    num_finds,
+    num_finds=1,
 ):
     global active_objects, robutler_loc_dict, count_obj
-
+    # Delete all active objects that where spawned by SPAWNER
     for object_ns in active_objects:
         partial(
             delete_objs, object_ns=object_ns, delete_object_client=delete_object_client
         )
         rospy.logwarn("TESTS")
 
+    # Spawn new objects
     random_num_finds = random.randint(1, num_finds)
     for _ in range(random_num_finds):
         if any(random.getrandbits(1) for _ in range(3)):
             rospy.loginfo(f"Spawning object ({sp_object}) in the {division}")
-
             try:
                 resp = spawn_object_client(
                     division=division, object_name=sp_object, object_size=object_size
@@ -239,6 +239,8 @@ def spawn_move_to_find(
         else:
             rospy.loginfo(f"It will not spawn the object ({sp_object}) in {division}")
 
+    # Tell to move to next section in the desired Division
+        #TODO: Maybe change the detection to as soon as detects stop the search
     for index, (section_name, section_data) in enumerate(
         robutler_loc_dict[division].items()
     ):
@@ -258,7 +260,7 @@ def spawn_move_to_find(
             rospy.loginfo(f"Robutler found {sp_object} in {division}")
             break
         else:
-            if index == len(robutler_loc_dict[division].items() - 1):
+            if index == (len(robutler_loc_dict[division].items()) - 1):
                 rospy.loginfo(f"Robutler didn't find all the {sp_object} in {division}")
             else:
                 rospy.loginfo(f"There is still {sp_object} to find in {division}")
@@ -296,8 +298,8 @@ def main():
     with open(fullpath, "r") as dictionary_file:
         robutler_loc_dict = json.load(dictionary_file)
 
-    obj_names = ["bottle", "laptop", "person", "sphere", "vase"]
-    object_sizes = ["Small", "Small", "Big", "Small", "Small"]
+    obj_names = ["bottle", "laptop", "person", "sphere", "vase", "tvmonitor"]
+    object_sizes = ["Small", "Small", "Big", "Small", "Small", "Small"]
 
     h_move_entry = menu_handler.insert("Move to")
 
@@ -339,56 +341,56 @@ def main():
 
     # --------------------------------------------------------------------------------------------------------------------
 
-    h_fourth_entry = menu_handler.insert("Check if")
+    # h_fourth_entry = menu_handler.insert("Check if")
 
-    entry = menu_handler.insert(
-        "Pc is on the table",
-        parent=h_fourth_entry,
-        callback=partial(
-            move_and_find,
-            location="bed_table_on_top",
-            object="pc",
-            goal_publisher=goal_publisher,
-        ),
-    )
+    # entry = menu_handler.insert(
+    #     "Pc is on the table",
+    #     parent=h_fourth_entry,
+    #     callback=partial(
+    #         move_and_find,
+    #         location="bed_table_on_top",
+    #         object="pc",
+    #         goal_publisher=goal_publisher,
+    #     ),
+    # )
 
-    entry = menu_handler.insert(
-        "Can of coke is on the table",
-        parent=h_fourth_entry,
-        callback=partial(
-            move_and_find,
-            location="top_dining_table",
-            object="can_coke",
-            goal_publisher=goal_publisher,
-        ),
-    )
+    # entry = menu_handler.insert(
+    #     "Can of coke is on the table",
+    #     parent=h_fourth_entry,
+    #     callback=partial(
+    #         move_and_find,
+    #         location="top_dining_table",
+    #         object="can_coke",
+    #         goal_publisher=goal_publisher,
+    #     ),
+    # )
 
-    entry = menu_handler.insert(
-        "Bootle of wine is on the table",
-        parent=h_fourth_entry,
-        callback=partial(
-            move_and_find,
-            location="top_dining_table",
-            object="bottle",
-            goal_publisher=goal_publisher,
-        ),
-    )
+    # entry = menu_handler.insert(
+    #     "Bootle of wine is on the table",
+    #     parent=h_fourth_entry,
+    #     callback=partial(
+    #         move_and_find,
+    #         location="top_dining_table",
+    #         object="bottle",
+    #         goal_publisher=goal_publisher,
+    #     ),
+    # )
 
-    entry = menu_handler.insert(
-        "Diner table is cleared",
-        parent=h_fourth_entry,
-        callback=partial(
-            check,
-            location="top_dining_table",
-            object="diningtable",
-            goal_publisher=goal_publisher,
-        ),
-    )
-    entry = menu_handler.insert(
-        "Is someone home",
-        parent=h_fourth_entry,
-        callback=partial(find_in_house, object="person", goal_publisher=goal_publisher),
-    )
+    # entry = menu_handler.insert(
+    #     "Diner table is cleared",
+    #     parent=h_fourth_entry,
+    #     callback=partial(
+    #         check,
+    #         location="top_dining_table",
+    #         object="diningtable",
+    #         goal_publisher=goal_publisher,
+    #     ),
+    # )
+    # entry = menu_handler.insert(
+    #     "Is someone home",
+    #     parent=h_fourth_entry,
+    #     callback=partial(find_in_house, object="person", goal_publisher=goal_publisher),
+    # )
 
     makeMenuMarker("marker1")
 
