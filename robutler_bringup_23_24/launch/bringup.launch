@@ -9,17 +9,19 @@
     <arg name="use_navigation" default="true"/>
     <arg name="use_yolo" default="true"/>
     <arg name="update_map_dict" default="false"/>
+    <arg name="use_arm" default="false" />
 
-
+    <include file="$(find object_spawner_23_24)/launch/object_spawner.launch"/>
+    
     <include file="$(find robutler_description_23_24)/launch/manipulation_view.launch">
         <arg name="open_rviz" value="false"/>
+        <arg name="use_arm" value="$(arg use_arm)" />
     </include>
     <node pkg="rviz" type="rviz" name="rviz" output="screen" args="-d $(find robutler_bringup_23_24)/config/rviz.rviz"/>
 
     <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-urdf -model robutler -x $(arg x_pos) -y $(arg y_pos) -z $(arg z_pos) -Y $(arg Y_pos) -param robot_description" />
 
     <include file="$(find robutler_picture_saver_23_24)/launch/take_photo.launch"/>
-    <include file="$(find object_spawner_23_24)/launch/object_spawner.launch"/>
 
     
     <group if="$(arg use_navigation)">

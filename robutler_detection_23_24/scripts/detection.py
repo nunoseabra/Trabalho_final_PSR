@@ -35,13 +35,11 @@ class ObjectDetectorNode:
     def listening_to_objects(self, msg):
         if self.reading_enabled:
             rospy.loginfo(f"Darknet message received!")
-            new_detected_objects = []
             for bbox in msg.bounding_boxes:
                 if bbox.probability >= self.percentage_threshold:
                     if bbox.Class not in self.prev_detected_objects:
-                        new_detected_objects.append(bbox.Class)
-
-            self.detected_objects.extend(new_detected_objects)
+                        self.detected_objects.append(bbox.Class)
+                        
             self.prev_detected_objects = [
                 bbox.Class
                 for bbox in msg.bounding_boxes

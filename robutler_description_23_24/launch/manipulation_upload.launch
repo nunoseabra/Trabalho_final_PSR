@@ -1,5 +1,9 @@
 <launch>
   <arg name="model" default="$(env TURTLEBOT3_MODEL)" doc="model type [waffle, waffle_pi]"/>
+  <arg name="use_arm" default="true" />
 
-  <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find robutler_description_23_24)/urdf/manipulation_robot.urdf.xacro'"/>
+  <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find robutler_description_23_24)/urdf/manipulation_robot.urdf.xacro'" if="$(arg use_arm)"/>
+  <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find robutler_description_23_24)/urdf/robutler.urdf.xacro'" unless="$(arg use_arm)"/>
+
+
 </launch>

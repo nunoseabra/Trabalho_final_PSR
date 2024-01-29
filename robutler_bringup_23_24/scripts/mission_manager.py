@@ -220,7 +220,6 @@ def spawn_move_to_find(
             object_ns=object_ns,
             delete_object_client=delete_object_client,
         )
-        rospy.logwarn("TESTS")
 
     # Spawn new objects
     random_num_finds = random.randint(1, num_finds)
@@ -254,6 +253,8 @@ def spawn_move_to_find(
 
         moveTo(feedback, section_name, goal_publisher)
 
+        time.sleep(2)
+
         if index > 0:
             control_msg.enable_reading = False
             detection_control_publisher.publish(control_msg)
@@ -281,9 +282,11 @@ def main():
     rospy.init_node("mission_manager")
 
     # Create move_base_simple/goal publisher
-    goal_publisher = rospy.Publisher("/move_base_simple/goal", PoseStamped)
-    spawn_object_client = rospy.ServiceProxy("spawner/spawn_object", SpawnObject)
-    delete_object_client = rospy.ServiceProxy("spawner/delete_object", DeleteObject)
+    goal_publisher = rospy.Publisher(
+        "/move_base_simple/goal", PoseStamped, queue_size=5
+    )
+    spawn_object_client = rospy.ServiceProxy("/spawner/spawn_object", SpawnObject)
+    delete_object_client = rospy.ServiceProxy("/spawner/delete_object", DeleteObject)
     take_photo_client = rospy.ServiceProxy("take_photo_server/take_photo", TakePhoto)
     detected_objects_subscriber = rospy.Subscriber(
         "/mission_manager/detected_objects", String, update_objs_Class
