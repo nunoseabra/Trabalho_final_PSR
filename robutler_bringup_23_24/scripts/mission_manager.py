@@ -284,7 +284,7 @@ def spawn_move_to_find(
                 control_msg.percentage_threshold = percentage
                 detection_control_publisher.publish(control_msg)
 
-            moveTo(feedback, section_name, goal_publisher)
+            moveTo(feedback, section_name)
             while flag_still_moving:
                 if flag_interrupt:
                     rospy.loginfo(f"Goals interrupted!")
@@ -310,7 +310,7 @@ def spawn_move_to_find(
                 else:
                     rospy.loginfo(f"There is still {sp_object} to find in {division}")
     else:
-        moveTo(feedback, location, goal_publisher)
+        moveTo(feedback, location)
         while flag_still_moving:
             time.sleep(0.5)
         rospy.loginfo(f"Target Location Reached")
@@ -396,7 +396,7 @@ def main():
                 section_name,
                 parent=h_move_division,
                 callback=partial(
-                    moveTo, location=section_name, goal_publisher=goal_publisher
+                    moveTo, location=section_name
                 ),
             )
 
