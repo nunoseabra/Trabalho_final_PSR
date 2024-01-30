@@ -2,7 +2,7 @@
 <robot name="turtlebot3_manipulation" xmlns:xacro="http://ros.org/wiki/xacro">
 
   <!-- Include TurtleBot3 Waffle URDF -->
-  <xacro:include filename="$(find turtlebot3_description)/urdf/turtlebot3_waffle_pi_for_open_manipulator.urdf.xacro"/>
+  <xacro:include filename="$(find robutler_description_23_24)/urdf/robutler.urdf.xacro"/>
 
   <!-- Include OpenMANIPULATOR URDF -->
   <xacro:include filename="$(find robutler_description_23_24)/urdf/open_manipulator_x.urdf.xacro"/>
@@ -13,7 +13,8 @@
     <parent link="base_link"/>
     <child link="link1"/>
   </joint>
-
+  
+  <!--
     <link name="new_camera_link">
     <visual>
       <origin xyz="-0.06 0 0.0" rpy="0 0 0"/>
@@ -74,5 +75,6 @@
     <parent link="camera_rgb_frame2"/>
     <child link="camera_rgb_optical_frame2"/>
   </joint>
-  <link name="camera_rgb_optical_frame2"/>
+  <link name="camera_rgb_optical_frame2"/> -->
+
 </robot>
