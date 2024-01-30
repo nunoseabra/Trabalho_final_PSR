@@ -87,12 +87,10 @@ class SphereDetector:
 
                 # Define the color ranges for detection
                 color_ranges = {
-                    "red": ([350, 78, 49], [0, 100, 100]),
-                    # "violet": ([100, 0, 100], [200, 100, 255]),
-                    "violet": ([279, 58, 53], [300, 100, 100]),
-                    "blue": ([186, 49, 57], [240, 100, 100]),
+                    "red": ([0, 100, 100], [10, 255, 255]),  # Adjusted red range
+                    "blue": ([100, 100, 100], [150, 255, 255]),  # Adjusted blue range
+                    "violet": ([270, 100, 100], [310, 255, 255]),  # Adjusted violet range
                 }
-
                 # Check for each color range
                 for color_name, (lower_color, upper_color) in color_ranges.items():
                     # Create a mask to isolate the color within the specified range

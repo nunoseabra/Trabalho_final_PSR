@@ -16,10 +16,11 @@ from robutler_object_spawner_23_24.srv import SpawnObject, DeleteObject
 from robutler_picture_saver_23_24.srv import TakePhoto
 
 from std_msgs.msg import String
-from robutler_bringup_23_24.msg import DetectionControl
+from robutler_bringup_23_24.msg import DetectionControl, SphereDetection
 
 import random
 
+detected_objects_subscriber = None
 goal_publisher = None
 spawn_object_client = None
 delete_object_client = None
@@ -223,7 +224,7 @@ def spawn_move_to_find(
     percentage=0.75,
     instant=True,
 ):
-    global active_objects, robutler_loc_dict, count_obj, current_object, flag_still_moving, goal_publisher, spawn_object_client, detection_control_publisher, objs_Class
+    global active_objects, robutler_loc_dict, count_obj, current_object, flag_still_moving, goal_publisher, spawn_object_client, detection_control_publisher, objs_Class, detected_objects_subscriber
     # Delete all active objects that where spawned by SPAWNER
     current_object = sp_object
     if deletion:
@@ -255,72 +256,98 @@ def spawn_move_to_find(
                 rospy.logerr("Service call failed: %s" % e)
         else:
             rospy.loginfo(f"It will not spawn the object ({sp_object}) in {division}")
-    if location == " ":
-        for index, (section_name, section_data) in enumerate(
-            robutler_loc_dict[division].items()
-        ):
-            if index > 0 and not instant:
-                control_msg.enable_reading = True
-                control_msg.percentage_threshold = percentage
-                control_msg.instant = instant
-                detection_control_publisher.publish(control_msg)
 
-            moveTo(feedback, section_name)
+    if sp_object != "sphere":
+        if location == " ":
+            for index, (section_name, section_data) in enumerate(
+                robutler_loc_dict[division].items()
+            ):
+                if index > 0 and not instant:
+                    control_msg.enable_reading = True
+                    control_msg.percentage_threshold = percentage
+                    control_msg.instant = instant
+                    detection_control_publisher.publish(control_msg)
+
+                moveTo(feedback, section_name)
+                while flag_still_moving:
+                    time.sleep(0.5)
+                rospy.loginfo(f"Target Location Reached")
+                time.sleep(2)
+
+                if instant:
+                    control_msg.enable_reading = True
+                    control_msg.percentage_threshold = percentage
+                    control_msg.instant = instant
+                    time.sleep(1)
+                    detection_control_publisher.publish(control_msg)
+
+                if index > 0 and not instant:
+                    control_msg.enable_reading = False
+                    detection_control_publisher.publish(control_msg)
+
+                # rospy.logwarn("HERE")
+                # rospy.wait_for_message("/mission_manager/detected_objects", String)
+                # rospy.logwarn("HERE")
+                rospy.loginfo(f"Count: {count_obj}")
+                rospy.loginfo(f"Objects: {objs_Class}")
+
+                if count_obj >= random_num_finds:
+                    rospy.loginfo(
+                        f"Robutler found {sp_object} in {division}, with a certainty above {percentage*100}%"
+                    )
+                    break
+                else:
+                    if index == (len(robutler_loc_dict[division].items()) - 1):
+                        rospy.loginfo(
+                            f"Robutler didn't find all the {sp_object} in {division}"
+                        )
+                    else:
+                        rospy.loginfo(
+                            f"There is still {sp_object} to find in {division}"
+                        )
+        else:
+            moveTo(feedback, location)
             while flag_still_moving:
                 time.sleep(0.5)
             rospy.loginfo(f"Target Location Reached")
-            time.sleep(2)
-
-            if instant:
-                control_msg.enable_reading = True
-                control_msg.percentage_threshold = percentage
-                control_msg.instant = instant
-                time.sleep(1)
-                detection_control_publisher.publish(control_msg)
-
-            if index > 0 and not instant:
-                control_msg.enable_reading = False
-                detection_control_publisher.publish(control_msg)
-
-            # rospy.logwarn("HERE")
-            # rospy.wait_for_message("/mission_manager/detected_objects", String)
-            # rospy.logwarn("HERE")
-            rospy.loginfo(f"Count: {count_obj}")
-            rospy.loginfo(f"Objects: {objs_Class}")
-
-            if count_obj >= random_num_finds:
-                rospy.loginfo(
-                    f"Robutler found {sp_object} in {division}, with a certainty above {percentage*100}%"
-                )
-                break
-            else:
-                if index == (len(robutler_loc_dict[division].items()) - 1):
+            control_msg.enable_reading = True
+            control_msg.percentage_threshold = percentage
+            control_msg.instant = instant
+            detection_control_publisher.publish(control_msg)
+            time.sleep(4)
+            control_msg.enable_reading = False
+            detection_control_publisher.publish(control_msg)
+            if not check:
+                if count_obj >= random_num_finds:
                     rospy.loginfo(
-                        f"Robutler didn't find all the {sp_object} in {division}"
+                        f"Robutler found {sp_object} with a certainty above {percentage}"
                     )
                 else:
-                    rospy.loginfo(f"There is still {sp_object} to find in {division}")
-    else:
-        moveTo(feedback, location)
-        while flag_still_moving:
-            time.sleep(0.5)
-        rospy.loginfo(f"Target Location Reached")
-        control_msg.enable_reading = True
-        control_msg.percentage_threshold = percentage
-        control_msg.instant = instant
-        detection_control_publisher.publish(control_msg)
-        time.sleep(4)
-        control_msg.enable_reading = False
-        detection_control_publisher.publish(control_msg)
-        if not check:
-            if count_obj >= random_num_finds:
-                rospy.loginfo(
-                    f"Robutler found {sp_object} with a certainty above {percentage}"
-                )
+                    rospy.loginfo(f"Robutler didn't find {sp_object}")
             else:
-                rospy.loginfo(f"Robutler didn't find {sp_object}")
-        else:
-            return
+                return
+    else:
+        for index, (section_name, section_data) in enumerate(
+            robutler_loc_dict[division].items()
+        ):
+            moveTo(feedback, section_name)
+            while flag_still_moving:
+                time.sleep(0.5)
+            detected_objects_subscriber = rospy.Subscriber(
+                "sphere_detector_node/sphere_detection_results",
+                SphereDetection,
+                checkSpheres,
+            )
+
+
+def checkSpheres(msg):
+    global detected_objects_subscriber
+    num_spheres = msg.num_spheres
+    sphere_colors = msg.sphere_colors.split(",") if msg.sphere_colors else []
+
+    if sphere_colors:
+        rospy.loginfo(f"Robutler detected {num_spheres} with the colours {sphere_colors}")
+        detected_objects_subscriber.unregister()
 
 
 #  -------------------------MISSIONS------------------------------------------------
