@@ -54,8 +54,6 @@
   <build_depend>std_msgs</build_depend>
   <build_depend>darknet_ros_msgs</build_depend>
   <build_depend>robutler_bringup_23_24</build_depend>
-
-
   
 
   <build_export_depend>rospy</build_export_depend>

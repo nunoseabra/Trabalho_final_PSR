@@ -7,4 +7,6 @@
     </include>
     <node pkg="robutler_detection_23_24" type="detection.py" name="objects_detector" output="screen"/>
 
+    <node pkg="robutler_detection_23_24" type="colorgrama.py" name="sphere_detector_node" output="screen"/>
+
 </launch>
