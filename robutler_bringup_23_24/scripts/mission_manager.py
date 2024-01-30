@@ -29,28 +29,30 @@ marker_pos = 1
 flag_still_moving = False
 menu_handler = MenuHandler()
 robutler_loc_dict = {}
-h_first_entry = 0
-h_mode_last = 0
+h_move_entry = 0
+h_interrupt_entry = 0
 rospack = rospkg.RosPack()
 objs_Class = []
 count_obj = 0
 active_objects = []
 current_object = []
+
 #  -------------------------HANDLER------------------------------------------------
 
 
 def enableCb(feedback):
+    global h_move_entry
     handle = feedback.menu_entry_id
     state = menu_handler.getCheckState(handle)
 
     if state == MenuHandler.CHECKED:
         menu_handler.setCheckState(handle, MenuHandler.UNCHECKED)
         rospy.loginfo("Hiding first menu entry")
-        menu_handler.setVisible(h_first_entry, False)
+        menu_handler.setVisible(h_move_entry, False)
     else:
         menu_handler.setCheckState(handle, MenuHandler.CHECKED)
         rospy.loginfo("Showing first menu entry")
-        menu_handler.setVisible(h_first_entry, True)
+        menu_handler.setVisible(h_move_entry, True)
 
     menu_handler.reApply(server)
     rospy.loginfo("update")
@@ -58,12 +60,12 @@ def enableCb(feedback):
 
 
 def modeCb(feedback):
-    global h_mode_last
-    menu_handler.setCheckState(h_mode_last, MenuHandler.UNCHECKED)
-    h_mode_last = feedback.menu_entry_id
-    menu_handler.setCheckState(h_mode_last, MenuHandler.CHECKED)
+    global h_interrupt_entry
+    menu_handler.setCheckState(h_interrupt_entry, MenuHandler.UNCHECKED)
+    h_interrupt_entry = feedback.menu_entry_id
+    menu_handler.setCheckState(h_interrupt_entry, MenuHandler.CHECKED)
 
-    rospy.loginfo(f"Switching to menu entry # {h_mode_last}")
+    rospy.loginfo(f"Switching to menu entry # {h_interrupt_entry}")
     menu_handler.reApply(server)
     print("DONE")
     server.applyChanges()
@@ -158,6 +160,18 @@ def moveTo(feedback, location):
     # rospy.loginfo(f"Target Location ({location}) Reached")
 
 
+def interruption(feedback, cancel_pub):
+    rospy.loginfo("Cancelling the current goals...")
+    cancel_msg = GoalID()
+    cancel_pub.publish(cancel_msg)
+    rospy.loginfo("Goals Cancelled")
+
+
+def sign_of_arrival(msg):
+    global flag_still_moving
+    flag_still_moving = False
+
+
 #  -------------------------PICTURE------------------------------------------------
 
 
@@ -181,47 +195,10 @@ def update_objs_Class(msg):
     rospy.loginfo(f"Received: {msg.data}")
     count_obj += objs_Class.count(current_object)
     # rospy.logwarn("HERE")
-
     # rospy.loginfo(f"For a total of {count_obj} {current_object} found")
 
 
-def check(feedback, location, division, object, num_finds, instant):
-    spawn_move_to_find(
-        feedback,
-        division=division,
-        sp_object=object,
-        object_size="Small",
-        num_finds=num_finds,
-        location=location,
-        instant=instant,
-    )
-    if any(obj != "dinnertable" and obj != "chair" for obj in objs_Class):
-        rospy.loginfo("The table is not cleared!")
-    else:
-        rospy.loginfo("The table is cleared!")
-
-
-def find_in_house(feedback, object, object_size, instant):
-    global robutler_loc_dict, count_obj
-    percentage = 0.85
-    for division_name, division_data in robutler_loc_dict.items():
-        spawn_move_to_find(
-            feedback=feedback,
-            division=division_name,
-            sp_object=object,
-            object_size=object_size,
-            deletion=False,
-            num=1,
-            percentage=percentage,
-            instant=instant,
-        )
-        if count_obj > 1:
-            rospy.loginfo(f"There is SOMEONE HOME!!!!!(certanty of {percentage*100}%)")
-        else:
-            rospy.loginfo(f"Robutler didn't find anyone")
-
-
-#  -------------------------SPAWNER------------------------------------------------
+#  -------------------------SPAWNER-&-Mission----------------------------------------------
 
 
 def delete_objs(feedback, object_ns):
@@ -328,9 +305,9 @@ def spawn_move_to_find(
         while flag_still_moving:
             time.sleep(0.5)
         rospy.loginfo(f"Target Location Reached")
-        control_msg = DetectionControl()
         control_msg.enable_reading = True
         control_msg.percentage_threshold = percentage
+        control_msg.instant = instant
         detection_control_publisher.publish(control_msg)
         time.sleep(4)
         control_msg.enable_reading = False
@@ -346,16 +323,43 @@ def spawn_move_to_find(
             return
 
 
-def interruption(feedback, cancel_pub):
-    rospy.loginfo("Cancelling the current goals...")
-    cancel_msg = GoalID()
-    cancel_pub.publish(cancel_msg)
-    rospy.loginfo("Goals Cancelled")
+#  -------------------------MISSIONS------------------------------------------------
 
 
-def sign_of_arrival(msg):
-    global flag_still_moving
-    flag_still_moving = False
+def check(feedback, location, division, object, num_finds, instant):
+    spawn_move_to_find(
+        feedback,
+        division=division,
+        sp_object=object,
+        object_size="Small",
+        num_finds=num_finds,
+        location=location,
+        instant=instant,
+    )
+    if any(obj != "dinnertable" and obj != "chair" for obj in objs_Class):
+        rospy.loginfo("The table is not cleared!")
+    else:
+        rospy.loginfo("The table is cleared!")
+
+
+def find_in_house(feedback, object, object_size, instant):
+    global robutler_loc_dict, count_obj
+    percentage = 0.85
+    for division_name, division_data in robutler_loc_dict.items():
+        spawn_move_to_find(
+            feedback=feedback,
+            division=division_name,
+            sp_object=object,
+            object_size=object_size,
+            deletion=False,
+            num=1,
+            percentage=percentage,
+            instant=instant,
+        )
+        if count_obj > 1:
+            rospy.loginfo(f"There is SOMEONE HOME!!!!!(certanty of {percentage*100}%)")
+        else:
+            rospy.loginfo(f"Robutler didn't find anyone")
 
 
 #  -------------------------MAIN------------------------------------------------
@@ -363,33 +367,41 @@ def sign_of_arrival(msg):
 
 # TODO: change dictionary to also be a different pkg of mgs Division_Section_Coords
 def main():
-    global server, h_first_entry, h_mode_last, robutler_loc_dict, goal_publisher, spawn_object_client, delete_object_client, detection_control_publisher
+    global server, h_move_entry, h_interrupt_entry, robutler_loc_dict, goal_publisher, spawn_object_client, delete_object_client, detection_control_publisher
 
     # -------------------------------
     # Initialization
     # -------------------------------
     rospy.init_node("mission_manager")
+    server = InteractiveMarkerServer("mission")
+    print(server)
 
-    # Create move_base_simple/goal publisher
+    # ---------------------------------------Publishers---------------------------------------------------------------------
+
     goal_publisher = rospy.Publisher(
         "/move_base_simple/goal", PoseStamped, queue_size=5
-    )
-    spawn_object_client = rospy.ServiceProxy("/spawner/spawn_object", SpawnObject)
-    delete_object_client = rospy.ServiceProxy("/spawner/delete_object", DeleteObject)
-    take_photo_client = rospy.ServiceProxy("take_photo_server/take_photo", TakePhoto)
-    detected_objects_subscriber = rospy.Subscriber(
-        "/mission_manager/detected_objects", String, update_objs_Class
     )
     detection_control_publisher = rospy.Publisher(
         "/mission_manager/detection_control", DetectionControl, queue_size=10
     )
     cancel_pub = rospy.Publisher("/move_base/cancel", GoalID, queue_size=3)
+
+    # ---------------------------------------Clients---------------------------------------------------------------------
+
+    spawn_object_client = rospy.ServiceProxy("/spawner/spawn_object", SpawnObject)
+    delete_object_client = rospy.ServiceProxy("/spawner/delete_object", DeleteObject)
+    take_photo_client = rospy.ServiceProxy("take_photo_server/take_photo", TakePhoto)
+
+    # ---------------------------------------Subscribers---------------------------------------------------------------------
+
+    detected_objects_subscriber = rospy.Subscriber(
+        "/mission_manager/detected_objects", String, update_objs_Class
+    )
     arrival_sub = rospy.Subscriber(
         "/move_base/result", MoveBaseActionResult, sign_of_arrival
     )
 
-    server = InteractiveMarkerServer("mission")
-    print(server)
+    # ---------------------------------------Dictionary---------------------------------------------------------------------
 
     pkg_path = rospack.get_path("robutler_bringup_23_24")
     fullpath = pkg_path + "/dictionary/robutler_check_loc.txt"
@@ -398,6 +410,8 @@ def main():
 
     obj_names = ["bottle", "laptop", "person", "sphere", "vase", "tvmonitor"]
     object_sizes = ["Small", "Small", "Big", "Small", "Small", "Small"]
+
+    # ----------------------------------------Missions----------------------------------------------------------------------
 
     h_move_entry = menu_handler.insert("Move to")
 
@@ -427,18 +441,13 @@ def main():
                 ),
             )
 
-    h_photo_entry = menu_handler.insert(
-        "Take picture",
-        callback=partial(take_picture, take_photo_client=take_photo_client),
-    )
-
     # --------------------------------------------------------------------------------------------------------------------
 
-    h_fourth_entry = menu_handler.insert("Check if")
+    h_checkh_entry = menu_handler.insert("Check if")
 
     entry = menu_handler.insert(
         "Pc is on the table",
-        parent=h_fourth_entry,
+        parent=h_checkh_entry,
         callback=partial(
             spawn_move_to_find,
             division="bedroom",
@@ -451,7 +460,7 @@ def main():
 
     entry = menu_handler.insert(
         "Bootle of wine is on the table",
-        parent=h_fourth_entry,
+        parent=h_checkh_entry,
         callback=partial(
             spawn_move_to_find,
             division="dining_room",
@@ -464,7 +473,7 @@ def main():
 
     entry = menu_handler.insert(
         "See if the stove is on",
-        parent=h_fourth_entry,
+        parent=h_checkh_entry,
         callback=partial(
             spawn_move_to_find,
             division="kitchen",
@@ -477,7 +486,7 @@ def main():
 
     entry = menu_handler.insert(
         "Diner table is cleared",
-        parent=h_fourth_entry,
+        parent=h_checkh_entry,
         callback=partial(
             check,
             location="top_dining_table",
@@ -489,13 +498,20 @@ def main():
     )
     entry = menu_handler.insert(
         "Is someone home",
-        parent=h_fourth_entry,
+        parent=h_checkh_entry,
         callback=partial(
             find_in_house,
             object="person",
             object_size="Big",
             instant=False,
         ),
+    )
+
+    # --------------------------------------------------------------------------------------------------------------------
+
+    h_photo_entry = menu_handler.insert(
+        "Take picture",
+        callback=partial(take_picture, take_photo_client=take_photo_client),
     )
 
     h_interrupt_entry = menu_handler.insert(
