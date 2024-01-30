@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <sdf version="1.5">
-  <model name="coca_cola">
+  <model name="bottle_coca_cola">
     <link name="link">
 	 <pose>0 0 0.115 0 0 0</pose>
       <inertial>
@@ -25,7 +25,7 @@
 	<visual name="bodyMesh">
 	<geometry>
 	  <mesh>
-	    <uri>model://coca_cola/meshes/coke.dae</uri>
+	    <uri>model://bottle_coca_cola/meshes/coke.dae</uri>
 	  	<scale>1 1 1</scale>
 	  </mesh>
 	  </geometry>

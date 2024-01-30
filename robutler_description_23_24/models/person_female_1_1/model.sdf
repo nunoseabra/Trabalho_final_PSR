@@ -1,12 +1,12 @@
 <?xml version='1.0'?>
 <sdf version='1.6'>
-  <model name='human_female_1_1'>
+  <model name='person_female_1_1'>
     <link name='link_0'>
         <visual name='visual'>
         <pose frame=''>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://human_female_1_1/meshes/belt.dae</uri>
+            <uri>model://person_female_1_1/meshes/belt.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -30,7 +30,7 @@
         <pose frame=''>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://human_female_1_1/meshes/belt.dae</uri>
+            <uri>model://person_female_1_1/meshes/belt.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -41,7 +41,7 @@
         <pose frame=''>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://human_female_1_1/meshes/eyeballs.dae</uri>
+            <uri>model://person_female_1_1/meshes/eyeballs.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -65,7 +65,7 @@
         <pose frame=''>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://human_female_1_1/meshes/eyeballs.dae</uri>
+            <uri>model://person_female_1_1/meshes/eyeballs.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -76,7 +76,7 @@
         <pose frame=''>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://human_female_1_1/meshes/shoes.dae</uri>
+            <uri>model://person_female_1_1/meshes/shoes.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -100,7 +100,7 @@
         <pose frame=''>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://human_female_1_1/meshes/shoes.dae</uri>
+            <uri>model://person_female_1_1/meshes/shoes.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -111,14 +111,14 @@
         <pose frame=''>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://human_female_1_1/meshes/skin.dae</uri>
+            <uri>model://person_female_1_1/meshes/skin.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
        <material>
           <script>
-            <uri>model://human_female_1_1/materials/scripts</uri>
-            <uri>model://human_female_1_1/materials/textures</uri>
+            <uri>model://person_female_1_1/materials/scripts</uri>
+            <uri>model://person_female_1_1/materials/textures</uri>
             <name>skin_1</name>
           </script>
         </material>
@@ -131,7 +131,7 @@
         <pose frame=''>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://human_female_1_1/meshes/skin.dae</uri>
+            <uri>model://person_female_1_1/meshes/skin.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -142,7 +142,7 @@
         <pose frame=''>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://human_female_1_1/meshes/teeth.dae</uri>
+            <uri>model://person_female_1_1/meshes/teeth.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -166,7 +166,7 @@
         <pose frame=''>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://human_female_1_1/meshes/teeth.dae</uri>
+            <uri>model://person_female_1_1/meshes/teeth.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -183,8 +183,8 @@
         </geometry>
                <material>
           <script>
-            <uri>model://human_female_1_1/materials/scripts</uri>
-            <uri>model://human_female_1_1/materials/textures</uri>
+            <uri>model://person_female_1_1/materials/scripts</uri>
+            <uri>model://person_female_1_1/materials/textures</uri>
             <name>hair_1</name>
           </script>
         </material>
@@ -197,7 +197,7 @@
         <pose frame=''>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://human_female_1_1/meshes/eyebrows.dae</uri>
+            <uri>model://person_female_1_1/meshes/eyebrows.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -208,7 +208,7 @@
         <pose frame=''>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://human_female_1_1/meshes/eyes_makeup.dae</uri>
+            <uri>model://person_female_1_1/meshes/eyes_makeup.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -232,7 +232,7 @@
         <pose frame=''>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://human_female_1_1/meshes/eyes_makeup.dae</uri>
+            <uri>model://person_female_1_1/meshes/eyes_makeup.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -243,14 +243,14 @@
         <pose frame=''>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://human_female_1_1/meshes/hair.dae</uri>
+            <uri>model://person_female_1_1/meshes/hair.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
            <material>
           <script>
-            <uri>model://human_female_1_1/materials/scripts</uri>
-            <uri>model://human_female_1_1/materials/textures</uri>
+            <uri>model://person_female_1_1/materials/scripts</uri>
+            <uri>model://person_female_1_1/materials/textures</uri>
             <name>hair_1_1</name>
           </script>
         </material>
@@ -263,7 +263,7 @@
         <pose frame=''>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://human_female_1_1/meshes/hair.dae</uri>
+            <uri>model://person_female_1_1/meshes/hair.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -274,7 +274,7 @@
         <pose frame=''>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://human_female_1_1/meshes/lenses.dae</uri>
+            <uri>model://person_female_1_1/meshes/lenses.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -298,7 +298,7 @@
         <pose frame=''>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://human_female_1_1/meshes/lenses.dae</uri>
+            <uri>model://person_female_1_1/meshes/lenses.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -309,7 +309,7 @@
         <pose frame=''>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://human_female_1_1/meshes/lips.dae</uri>
+            <uri>model://person_female_1_1/meshes/lips.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -333,7 +333,7 @@
         <pose frame=''>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://human_female_1_1/meshes/lips.dae</uri>
+            <uri>model://person_female_1_1/meshes/lips.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -344,7 +344,7 @@
         <pose frame=''>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://human_female_1_1/meshes/pants.dae</uri>
+            <uri>model://person_female_1_1/meshes/pants.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -368,7 +368,7 @@
         <pose frame=''>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://human_female_1_1/meshes/pants.dae</uri>
+            <uri>model://person_female_1_1/meshes/pants.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -379,7 +379,7 @@
         <pose frame=''>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://human_female_1_1/meshes/pupils.dae</uri>
+            <uri>model://person_female_1_1/meshes/pupils.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -403,7 +403,7 @@
         <pose frame=''>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://human_female_1_1/meshes/pupils.dae</uri>
+            <uri>model://person_female_1_1/meshes/pupils.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -414,7 +414,7 @@
         <pose frame=''>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://human_female_1_1/meshes/shirt.dae</uri>
+            <uri>model://person_female_1_1/meshes/shirt.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -438,7 +438,7 @@
         <pose frame=''>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://human_female_1_1/meshes/shirt.dae</uri>
+            <uri>model://person_female_1_1/meshes/shirt.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
