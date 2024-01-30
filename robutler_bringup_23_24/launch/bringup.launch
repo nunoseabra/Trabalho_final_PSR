@@ -1,29 +1,39 @@
 <?xml version="1.0"?>
 <launch>
+    
     <arg name="model" default="$(env TURTLEBOT3_MODEL)" doc="model type [burger, waffle, waffle_pi]"/>
+
+    <!--Options to spawn robot-->
     <arg name="x_pos" default="0.007754"/>
     <arg name="y_pos" default="0.109834"/>
     <arg name="z_pos" default="0.0"/>
     <arg name="Y_pos" default="1.57"/>
+    
     <arg name="use_gui" default="false" />
     <arg name="use_navigation" default="true"/>
     <arg name="use_yolo" default="true"/>
     <arg name="update_map_dict" default="false"/>
     <arg name="use_arm" default="false" />
-
+    
+    <!--Launch object spawner node -->
     <include file="$(find robutler_object_spawner_23_24)/launch/object_spawner.launch"/>
     
+    <!--Include manipulation arm launch-->
     <include file="$(find robutler_description_23_24)/launch/manipulation_view.launch">
         <arg name="open_rviz" value="false"/>
         <arg name="use_arm" value="$(arg use_arm)" />
     </include>
+
+    <!--Launch Rviz with configuration-->
     <node pkg="rviz" type="rviz" name="rviz" output="screen" args="-d $(find robutler_bringup_23_24)/config/rviz.rviz"/>
 
+    <!-- Node to spawn the robot -->
     <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-urdf -model robutler -x $(arg x_pos) -y $(arg y_pos) -z $(arg z_pos) -Y $(arg Y_pos) -param robot_description" />
 
+    <!--Launch node take pictures-->
     <include file="$(find robutler_picture_saver_23_24)/launch/take_photo.launch"/>
 
-    
+    <!--Launch of navigation systems-->
     <group if="$(arg use_navigation)">
         <include file="$(find robutler_navigation_23_24)/launch/localization.launch">
         </include>
@@ -31,14 +41,17 @@
         </include>
     </group>
     
+    <!--Launch mission manager node-->
     <node pkg="robutler_bringup_23_24" type="mission_manager.py" name="mission_manager" output="screen"/>
     
+    <!--Launch detection darknet_ros node -->
     <group if="$(arg use_yolo)">
         <include file="$(find robutler_detection_23_24)/launch/detection.launch">
             <arg name="image" value="/camera2/rgb/image_raw2"/>
         </include>
     </group>
     
+    <!--Upload dictionary of locations -->
     <group if="$(arg update_map_dict)">
         <node pkg="robutler_bringup_23_24" name="small_house_dict" type="small_house_dict.py"/>
     </group>

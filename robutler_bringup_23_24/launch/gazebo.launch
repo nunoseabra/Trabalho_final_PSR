@@ -1,8 +1,9 @@
 <?xml version="1.0"?>
 <launch>
 
-    <env name="GAZEBO_MODEL_PATH" value="$(find robutler_description_23_24)/models/"/>
+    <env name="GAZEBO_MODEL_PATH" value="$(find robutler_description_23_24)/models"/>
 
+    <!--Launch of gazebo and options-->
     <include file="$(find gazebo_ros)/launch/empty_world.launch">
         <arg name="world_name" value="$(find robutler_bringup_23_24)/worlds/small_house.world"/>
         <arg name="paused" value="false"/>
