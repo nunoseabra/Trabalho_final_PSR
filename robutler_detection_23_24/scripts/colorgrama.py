@@ -22,6 +22,7 @@ class SphereDetector:
             SphereDetection,
             queue_size=10,
         )
+        self.prev_detections = []
 
     def image_callback(self, data):
         try:
@@ -32,18 +33,20 @@ class SphereDetector:
             return
 
         # Process the image to detect spheres
-        num_spheres, sphere_colors = self.detect_spheres(cv_image)
+        num_spheres, sphere_colors, current_detections = self.detect_spheres(cv_image)
+
+        filtered_detections = self.apply_position_filter(
+            current_detections, sphere_colors
+        )
 
         # Publish the detection results
         detection_msg = SphereDetection()
-        detection_msg.num_spheres = num_spheres
+        detection_msg.num_spheres = len(filtered_detections)
         detection_msg.sphere_colors = ",".join(sphere_colors)
-        rospy.loginfo(f"num_spheres {num_spheres} , sphere_colors {sphere_colors}")
+        rospy.loginfo(
+            f"num_spheres {len(filtered_detections)} , sphere_colors {sphere_colors}"
+        )
         self.sphere_pub.publish(detection_msg)
-
-        # Log the detection results
-        rospy.loginfo("Number of spheres: %d" % num_spheres)
-        rospy.loginfo("Sphere colors: %s" % sphere_colors)
 
     def detect_spheres(self, image):
         # Convert to grayscale.
@@ -66,6 +69,7 @@ class SphereDetector:
 
         num_spheres = 0  # Initialize counter
         total_color_name = []
+        current_detections = []
         # Draw circles that are detected.
         if detected_circles is not None:
             # Convert the circle parameters a, b and r to integers.
@@ -74,6 +78,7 @@ class SphereDetector:
             for pt in detected_circles[0, :]:
                 a, b, r = pt[0], pt[1], pt[2]
 
+                current_detections.append((a, b))
                 # Crop the circle region
                 circle_roi = image[b - r : b + r, a - r : a + r]
 
@@ -82,10 +87,10 @@ class SphereDetector:
 
                 # Define the color ranges for detection
                 color_ranges = {
-                    "red": ([0, 100, 100], [10, 255, 255]),
+                    "red": ([350, 78, 49], [0, 100, 100]),
                     # "violet": ([100, 0, 100], [200, 100, 255]),
-                    "violet": ([284, 74, 89], [306, 93, 79]),
-                    "blue": ([94, 80, 2], [120, 255, 255]),
+                    "violet": ([279, 58, 53], [300, 100, 100]),
+                    "blue": ([186, 49, 57], [240, 100, 100]),
                 }
 
                 # Check for each color range
@@ -105,7 +110,7 @@ class SphereDetector:
                         cv2.circle(image, (a, b), r, (0, 255, 0), 2)
 
                         # Draw a small circle (of radius 1) to show the center.
-                        cv2.circle(image, (a, b), 1, (0, 0, 255), 3)
+                        # cv2.circle(image, (a, b), 1, (0, 0, 255), 3)
         else:
             rospy.loginfo("No Spheres Detected")
             num_spheres = 0
@@ -115,7 +120,26 @@ class SphereDetector:
         cv2.imshow("Detected Circle", image)
         cv2.waitKey(1)  # Adjust the delay as needed
 
-        return num_spheres, total_color_name
+        return num_spheres, total_color_name, current_detections
+
+    def apply_position_filter(self, current_detections, sphere_colors):
+        filtered_detections = []
+        filtered_colors = []
+
+        # Iterate over the current detections and compare with the previous ones
+        for detection, color in zip(current_detections, sphere_colors):
+            if all(
+                self.calculate_distance(detection, prev_detection) > 10
+                for prev_detection in self.prev_detections
+            ):
+                filtered_detections.append(detection)
+                filtered_colors.append(color)
+
+        return filtered_detections, filtered_colors
+
+    def calculate_distance(self, detection1, detection2):
+        # Calculate Euclidean distance between two detections
+        return np.linalg.norm(np.array(detection1) - np.array(detection2))
 
 
 if __name__ == "__main__":
