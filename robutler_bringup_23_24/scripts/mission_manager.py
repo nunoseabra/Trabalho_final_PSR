@@ -12,7 +12,7 @@ from move_base_msgs.msg import MoveBaseActionResult
 import time
 import json
 from actionlib_msgs.msg import GoalID
-from object_spawner_23_24.srv import SpawnObject, DeleteObject
+from robutler_object_spawner_23_24.srv import SpawnObject, DeleteObject
 from robutler_picture_saver_23_24.srv import TakePhoto
 
 from std_msgs.msg import String

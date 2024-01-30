@@ -10,7 +10,7 @@ import random
 import os
 import json
 import rospkg
-from object_spawner_23_24.srv import SpawnObject, SpawnObjectResponse, DeleteObject
+from robutler_object_spawner_23_24.srv import SpawnObject, SpawnObjectResponse, DeleteObject
 
 
 class ObjectSpawner:

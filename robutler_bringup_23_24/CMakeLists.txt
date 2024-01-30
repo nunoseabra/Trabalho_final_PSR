@@ -18,7 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
   darknet_ros_msgs
   cv_bridge
   robutler_picture_saver_23_24
-  object_spawner_23_24
+  robutler_object_spawner_23_24
   actionlib_msgs
 )
 
@@ -113,7 +113,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES robutler_bringup_23_24
-  CATKIN_DEPENDS rospy interactive_markers visualization_msgs geometry_msgs move_base_msgs darknet_ros_msgs std_msgs cv_bridge robutler_picture_saver_23_24 object_spawner_23_24 actionlib_msgs 
+  CATKIN_DEPENDS rospy interactive_markers visualization_msgs geometry_msgs move_base_msgs darknet_ros_msgs std_msgs cv_bridge robutler_picture_saver_23_24 robutler_object_spawner_23_24 actionlib_msgs 
 #  DEPENDS system_lib
 )
 

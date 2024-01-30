@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import rospy
-from object_spawner_23_24.srv import SpawnObject, DeleteObject
+from robutler_object_spawner_23_24.srv import SpawnObject, DeleteObject
 from geometry_msgs.msg import Pose, Point, Quaternion, PoseStamped
 from robutler_bringup_23_24.msg import DetectionControl
 from tf.transformations import quaternion_from_euler

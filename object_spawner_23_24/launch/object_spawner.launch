@@ -1,4 +1,0 @@
-<?xml version="1.0"?>
-<launch>
-    <node pkg="object_spawner_23_24" type="spawn_object.py" name="spawner" output="screen"/>
-</launch>
