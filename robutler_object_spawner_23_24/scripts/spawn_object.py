@@ -105,6 +105,8 @@ class ObjectSpawner:
                     f"Location '{location}' is unknown in division '{division}'. Available locations are {list(temp_sections.keys())}"
                 )
                 return
+            
+        rospy.loginfo(random_sec_coords)
 
         (x, y, z, roll, pitch, yaw) = random_sec_coords
 
