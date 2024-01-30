@@ -10,7 +10,7 @@
       <mu2>30.0</mu2>
       <maxVel>1.0</maxVel>
       <minDepth>0.001</minDepth>
-      <material>Gazebo/Red</material>
+      <material>Gazebo/FlatBlack</material>
     </gazebo>
   </xacro:macro>
 
@@ -39,7 +39,8 @@
   <gazebo reference="end_effector_link">
     <material>Gazebo/DarkGrey</material>
   </gazebo>
-
+  
+  <!--
   <gazebo reference="new_camera_link">
     <material>Gazebo/DarkGrey</material>
   </gazebo>
@@ -47,7 +48,8 @@
   <gazebo reference="new_camera_base_link">
     <material>Gazebo/FlatBlack</material>
   </gazebo>
-
+  -->
+  
   <!-- ros_control plugin -->
   <gazebo>
     <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">

@@ -233,7 +233,7 @@
       <geometry>
         <cylinder length="0.01" radius="0.03"/>
       </geometry>
-      <material name="blue"/>
+      <material name="green"/>
     </visual>
 
     <collision>
@@ -269,8 +269,8 @@
 
 
   <joint name="camera_rgb_joint" type="fixed">
-    <origin xyz="0.003 0.011 0.009" rpy="0 0 0"/>
-    <parent link="camera_link"/>
+    <origin xyz="-0.06 0 0.6" rpy="0 0 3.14"/>
+    <parent link="new_camera_base_link"/>
     <child link="camera_rgb_frame"/>
   </joint>
   <link name="camera_rgb_frame"/>
