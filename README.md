@@ -9,9 +9,9 @@ roscore
 
 roslaunch robutler_bringup_23_24 gazebo.launch
 
-roslaunch robutler_bringup_23_24 bringup.launch
+roslaunch robutler_bringup_23_24 bringup.launch use_yolo:=false use_arm:=true update_map_dict:=true
 
-roslaunch robutler_bringup_23_24 yolo_v3.launch
+roslaunch robutler_detection_23_24 detection.launch
 
 
 <---------- Navigation ----------->
