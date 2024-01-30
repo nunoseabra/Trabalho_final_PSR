@@ -347,7 +347,7 @@ def checkSpheres(msg):
 
     if sphere_colors:
         rospy.loginfo(
-            f"Robutler detected {num_spheres} with the colours {sphere_colors}"
+            f"Robutler detected {len(sphere_colors)} with the colours {sphere_colors}"
         )
         detected_objects_subscriber.unregister()
 

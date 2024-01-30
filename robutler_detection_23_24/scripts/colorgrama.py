@@ -10,7 +10,7 @@ from robutler_bringup_23_24.msg import SphereDetection
 
 class SphereDetector:
     def __init__(self):
-        rospy.init_node("sphere_detector_node", anonymous=True)
+        
 
         self.bridge = CvBridge()
         self.image_sub = rospy.Subscriber(
@@ -141,8 +141,24 @@ class SphereDetector:
 
 
 if __name__ == "__main__":
+    # try:
+    #     sphere_detector = SphereDetector()
+    #     rospy.spin()
+    # except rospy.ROSInterruptException:
+    #     pass
     try:
+        rospy.init_node("sphere_detector_node", anonymous=True)
         sphere_detector = SphereDetector()
-        rospy.spin()
+
+        # Define the rate at which the image callback should be called (e.g., 10 Hz)
+        rate = rospy.Rate(10)  # 10 Hz
+
+        while not rospy.is_shutdown():
+            # Call the image callback function
+            # sphere_detector.image_callback()
+
+            # Sleep to maintain the specified rate
+            rate.sleep()
+
     except rospy.ROSInterruptException:
         pass
