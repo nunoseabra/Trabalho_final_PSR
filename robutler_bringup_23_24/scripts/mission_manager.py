@@ -346,7 +346,9 @@ def checkSpheres(msg):
     sphere_colors = msg.sphere_colors.split(",") if msg.sphere_colors else []
 
     if sphere_colors:
-        rospy.loginfo(f"Robutler detected {num_spheres} with the colours {sphere_colors}")
+        rospy.loginfo(
+            f"Robutler detected {num_spheres} with the colours {sphere_colors}"
+        )
         detected_objects_subscriber.unregister()
 
 
@@ -383,8 +385,10 @@ def find_in_house(feedback, object, object_size, instant):
             percentage=percentage,
             instant=instant,
         )
-        if count_obj > 1:
+        if count_obj > 1 and instant:
             rospy.loginfo(f"There is SOMEONE HOME!!!!!(certanty of {percentage*100}%)")
+        if count_obj > 1 and not instant:
+            rospy.loginfo(f"Robutler has found {count_obj} {object} in the House")
         else:
             rospy.loginfo(f"Robutler didn't find anyone")
 
@@ -468,6 +472,13 @@ def main():
                 ),
             )
 
+    entry = menu_handler.insert(
+        "Total people in the House",
+        parent=h_find_entry,
+        callback=partial(
+            find_in_house, object="person", object_size="Big", instant=False
+        ),
+    )
     # --------------------------------------------------------------------------------------------------------------------
 
     h_checkh_entry = menu_handler.insert("Check if")
