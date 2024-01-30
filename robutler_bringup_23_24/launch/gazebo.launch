@@ -1,7 +1,6 @@
 <?xml version="1.0"?>
 <launch>
 
-    <!--Export models to gazebo-->
     <env name="GAZEBO_MODEL_PATH" value="$(find robutler_description_23_24)/models"/>
 
     <!--Launch of gazebo and options-->

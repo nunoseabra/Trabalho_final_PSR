@@ -1,0 +1,2 @@
+uint8 num_spheres
+string sphere_colors
