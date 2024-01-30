@@ -1,13 +1,13 @@
 <?xml version='1.0'?>
 <sdf version='1.6'>
-  <model name='monitor_1'>
+  <model name='tvmonitor_1'>
     <link name='link_6'>
       <pose frame=''>0 0 0 0 0 1.5</pose>
        <visual name='visual'>
         <pose frame=''>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://monitor_1/meshes/frame.dae</uri>
+            <uri>model://tvmonitor_1/meshes/frame.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -30,7 +30,7 @@
         <pose frame=''>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://monitor_1/meshes/frame.dae</uri>
+            <uri>model://tvmonitor_1/meshes/frame.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -42,7 +42,7 @@
         <pose frame=''>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://monitor_1/meshes/screen1.dae</uri>
+            <uri>model://tvmonitor_1/meshes/screen1.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -58,8 +58,8 @@
         </material-->
      <material>
           <script>
-            <uri>model://monitor_1/materials/scripts</uri>
-            <uri>model://monitor_1/materials/textures</uri>
+            <uri>model://tvmonitor_1/materials/scripts</uri>
+            <uri>model://tvmonitor_1/materials/textures</uri>
             <name>monitor_screen</name>
           </script>
         </material>
@@ -72,7 +72,7 @@
         <pose frame=''>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://monitor_1/meshes/screen1.dae</uri>
+            <uri>model://tvmonitor_1/meshes/screen1.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
